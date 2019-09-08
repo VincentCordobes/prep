@@ -9,48 +9,31 @@ module FlashCard = struct
   type t = {
     id: string;
     content: string;
-  } [@@deriving show]
-
-  let of_json value =
-    let open Yojson.Basic.Util in
-    let id = value |> member "id" |> to_string in
-    let content = value |> member "content" |> to_string in
-    {id; content}
-
-  let to_json (flashcard: t): Yojson.Basic.t =
-    `Assoc [
-      ("id", `String flashcard.id);
-      ("content", `String flashcard.content)
-    ]
-
+  } [@@deriving show, yojson]
 end
 
 
 module Frequency = struct
-  type f_unit = [ `day | `week] [@@deriving show]
+  open Yojson.Safe.Util
 
-  type t = {
-    value: int;
-    unit: f_unit;
-  } [@@deriving show]
+  type t = Day of int | Week of int [@@deriving show]
 
-  let of_json json_value =
-    let open Yojson.Basic.Util in
-    let value = json_value |> member "value" |> to_int in
-    let unit = 
-      match  json_value |> member "unit" |> to_string with
-      | "day" -> `day
-      | "week" -> `week
-      | _ -> failwith "Invalid unit" 
+
+  let of_yojson frequency = 
+    let value =
+      frequency |> member "value" |> to_int 
     in
-    {value; unit}
+    match frequency |> member "unit" |> to_string with
+    | "day" -> Ok (Day value)
+    | "week" -> Ok (Week value)
+    | _ -> Error "Invalid frequency" 
 
 
-  let to_json (frequency: t): Yojson.Basic.t =
-    `Assoc [
-      ("value", `Int frequency.value);
-      ("unit", `String "day");
-    ]
+  let to_yojson = function
+    | Day value -> `Assoc [("value", `Int value); 
+                           ("unit", `String "day")]
+    | Week value -> `Assoc [("value", `Int value); 
+                            ("unit", `String "week")]
 end
 
 
@@ -58,11 +41,11 @@ module Box = struct
   type t = {
     frequency: Frequency.t;
     flashcards: FlashCard.t list;
-  } [@@deriving show]
+  } [@@deriving show, yojson]
 
 
   let create frequency flashcards =
-    {frequency=frequency; flashcards=flashcards;}
+    {frequency; flashcards}
 
   let add flashcard box = 
     { box with flashcards = flashcard::box.flashcards }
@@ -71,55 +54,33 @@ module Box = struct
     { box with 
       flashcards = List.filter ~f:(fun f -> 
           not (phys_equal f.id flashcard_id)) box.flashcards }
-
-  let of_json json_value =
-    let open Yojson.Basic.Util in
-    let frequency = json_value
-                    |> member "frequency"
-                    |> Frequency.of_json 
-    in
-    let flashcards = json_value
-                     |> member "flashcards"
-                     |> to_list
-                     |> List.map ~f:FlashCard.of_json
-    in
-    {frequency; flashcards}
+end
 
 
-  let to_json (box: t): Yojson.Basic.t =
-    `Assoc [
-      ("frequency", Frequency.to_json box.frequency);
-      ("flashcards", `List (List.map box.flashcards (fun x -> FlashCard.to_json x)));
-    ]
-
-
+module Boxes = struct
+  type t = {boxes: Box.t list} [@@deriving show, yojson]
 end
 
 
 let load_boxes () = 
-  let open Yojson.Basic.Util in
-  let json_value = Yojson.Basic.from_file "db.json" in
-  let boxes = json_value 
-              |> member "boxes" 
-              |> to_list
-              |> List.map ~f:(Box.of_json)
-  in
+  let open Yojson.Safe.Util in
+  let json_value = Yojson.Safe.from_file "db.json" in
+  let boxes = Boxes.of_yojson json_value in
   boxes
 
 let save_boxes (boxes) =
-  let boxes_json = 
-    `Assoc [
-      ("boxes", `List (List.map boxes Box.to_json))
-    ] 
-  in
-  Yojson.Basic.pretty_to_channel stdout boxes_json
+  let boxes_json = Boxes.to_yojson boxes in
+  Yojson.Safe.pretty_to_channel stdout boxes_json
 
 
 let _ =
-  let boxes = load_boxes () in
+  let boxes_result = load_boxes () in
   printf "Loading boxes...\n";
-  List.iter boxes (fun box -> printf "%s" (Box.show box));
-  printf "\n\n";
-  printf "Saving boxes...\n";
-  save_boxes boxes
+  match boxes_result with
+  | Ok boxes -> 
+    printf "%s\n\n" (Boxes.show boxes);
+    printf "Saving boxes...\n";
+    save_boxes boxes
+  | Error e -> printf "Error in %s\n" e
+
 
