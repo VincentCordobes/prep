@@ -1,0 +1,4 @@
+profile = conventional 
+space-around-records = false
+space-around-lists = false
+space-around-arrays = false

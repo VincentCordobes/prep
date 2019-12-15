@@ -1,4 +1,10 @@
 (executable
   (name      main)
-	(libraries base core stdio re yojson ppx_deriving_yojson.runtime)
+	(libraries base
+             core
+             stdio
+             cmdliner
+             re
+             yojson
+             ppx_deriving_yojson.runtime)
   (preprocess (pps ppx_deriving.show ppx_deriving_yojson)))
