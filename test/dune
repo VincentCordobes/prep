@@ -1,0 +1,9 @@
+(test
+  (name test)
+  (libraries alcotest))
+
+(alias
+  (name  runtest)
+  (package spaced-repetition)
+  (deps test.exe)
+  (action (run ./test.exe --color=always))) 

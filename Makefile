@@ -1,11 +1,24 @@
-.PHONY: clean
+.PHONY: default build install uninstall test clean
+
+default: build
+
+build:
+	dune build
+
+install:
+	opam install . --deps-only --yes
+	dune install
+	dune build @install
+
+uninstall:
+	dune uninstall
+
+test:
+	dune runtest -f
+
 clean:
 	dune clean
 
-.PHONY: start
 start:
-	dune exec --profile release
+	dune exec src/main.exe --profile release
 
-.PHONY: build
-build:
-	dune build
