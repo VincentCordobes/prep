@@ -4,8 +4,8 @@ clean:
 
 .PHONY: start
 start:
-	dune exec ./main.exe --profile release
+	dune exec --profile release
 
 .PHONY: build
 build:
-	dune build ./main.exe
+	dune build

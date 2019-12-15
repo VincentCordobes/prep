@@ -1,5 +1,7 @@
 (executable
-  (name      main)
+  (name main)
+  (package spaced-repetition)
+  (public_name spaced-repetition)
 	(libraries base
              core
              stdio

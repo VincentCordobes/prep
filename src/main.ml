@@ -78,7 +78,7 @@ module Spaced_repetition = struct
   let save sp =
     let boxes_json = to_yojson sp in
     Yojson.Safe.pretty_to_channel stdout boxes_json;
-    (* Yojson.Safe.to_file "db.json" boxes_json *)
+    Yojson.Safe.to_file "db.json" boxes_json
 end
 
 
@@ -118,8 +118,16 @@ let add path name =
   | Error e -> fprintf stderr "Error in %s\n" e
 
 
+let list_boxes =
+  printf "Boxes"
+
+
 let add_cmd = 
   Term.(const add $ path_arg $ name_arg), Term.info "add"
+
+let list_cmd =
+  Term.(const list_boxes), Term.info "list-boxes"
+
 
 let () = 
   Term.eval_choice cmd [cmd; add_cmd]
