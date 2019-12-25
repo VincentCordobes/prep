@@ -1,11 +1,13 @@
 (executable
   (name main)
-  (package spaced-repetition)
-  (public_name spaced-repetition)
+  (package rehearsal)
+  (public_name rehearsal)
 	(libraries base
              core
              stdio
+             str
              cmdliner
+             uuidm
              re
              yojson
              ppx_deriving_yojson.runtime)

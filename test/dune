@@ -4,6 +4,6 @@
 
 (alias
   (name  runtest)
-  (package spaced-repetition)
+  (package rehearsal)
   (deps test.exe)
   (action (run ./test.exe --color=always))) 

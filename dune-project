@@ -1,14 +1,14 @@
 (lang dune 1.11)
-(name spaced-repetition)
+(name rehearsal)
 (license MIT)
 (authors "Vincent Cordobes <vincent.cordobes@gmail.com>")
-(source (github VincentCordobes/spaced-repetition))
-(homepage "https://github.com/VincentCordobes/spaced-repetition")
+(source (github VincentCordobes/rehearsal))
+(homepage "https://github.com/VincentCordobes/rehearsal")
 
 (generate_opam_files true)
 
 (package
- (name spaced-repetition)
+ (name rehearsal)
  (synopsis "Learn new skills based on the spaced repetition idea")
  (depends
   (ocaml (>= 4.08))
