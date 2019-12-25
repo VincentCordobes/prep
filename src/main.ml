@@ -11,7 +11,11 @@ module FlashCard = struct
     content: string;
   } [@@deriving show, yojson]
 
-  let short_id flashcard= (Str.first_chars flashcard.id 7)
+  let short_id flashcard_id = (Str.first_chars flashcard_id 7)
+
+  let title flashcard = String.split_lines flashcard.content |> List.hd_exn
+
+  let id_equals a b = String.(short_id a = short_id b)
 
 end
 
@@ -86,6 +90,10 @@ module Spaced_repetition = struct
     let boxes_json = to_yojson sp in
     (* Yojson.Safe.pretty_to_channel stdout boxes_json; *)
     Yojson.Safe.to_file "db.json" boxes_json
+
+
+  let all_flashcards sp =
+    List.bind sp.boxes ~f:(fun box -> box.flashcards)
 end
 
 
@@ -156,7 +164,7 @@ let add content =
       in
       (* printf "%s\n\n" (Spaced_repetition.show sp); *)
       Spaced_repetition.save sp;
-      printf "Flashcard added (%s)" (flashcard |> FlashCard.short_id)
+      printf "Flashcard added (%s)" (FlashCard.short_id flashcard.id)
   | Error e -> fprintf stderr "Error in %s\n" e
 
 
@@ -170,22 +178,25 @@ let list_boxes () =
   let db_result = Spaced_repetition.load () in
   match db_result with
   | Ok db ->
-      List.iter
-        ~f:(fun {frequency; flashcards} ->
-          printf "Every %s\n" (Frequency.to_string frequency);
-          List.iter
-            ~f:(fun flashcard -> printf "%s\n" (flashcard.content))
-            flashcards)
-        db.boxes
+      if List.length (Spaced_repetition.all_flashcards db) = 0 then
+        printf "No flashcards\n"
+      else
+        List.iter
+          ~f:(fun {frequency; flashcards} ->
+            if List.length flashcards > 0 then
+              printf "Every %s\n" (Frequency.to_string frequency);
+            List.iter
+              ~f:(fun flashcard ->
+                printf "* %s %s\n"
+                  (FlashCard.short_id flashcard.id)
+                  (FlashCard.title flashcard))
+              flashcards)
+          db.boxes
   | Error e -> fprintf stderr "Error in %s\n" e
 
 
 let list_boxes_cmd =
   Term.(const list_boxes $ const ()), Term.info "list-boxes"
-
-
-
-
 
 let edit () =
   let content =
@@ -200,6 +211,38 @@ let edit () =
 
 let edit_cmd = Term.(const edit $ const ()), Term.info "edit"
 
+
+let remove id =
+  let db_result = Spaced_repetition.load () in
+  match db_result with
+  | Ok db -> (
+      let all_flashcards = Spaced_repetition.all_flashcards db in
+      let matching_flashcards =
+        List.filter all_flashcards ~f:(fun flashcard ->
+            FlashCard.id_equals flashcard.id id)
+      in
+      match matching_flashcards with
+      | [] -> fprintf stderr "No flashcard found with id %s\n" id
+      | [flashcard] ->
+          let sp : Spaced_repetition.t =
+            {boxes = List.map db.boxes ~f:(fun boxe -> Box.remove flashcard.id boxe)}
+          in
+          Spaced_repetition.save sp;
+          printf "Flashcard removed\n"
+      | _ -> fprintf stderr "Multiple flashcard with the same short id.\n" )
+  | Error e -> fprintf stderr "Error in %s\n" e
+
+
+let flashcard_id_arg =
+  Arg.(
+    info [] ~docv:"ID" ~doc:"Id of the flashcard"
+    |> pos 0 (some string) None
+    |> required
+  )
+
+
+let remove_cmd = Term.(const remove $ flashcard_id_arg), Term.info "remove"
+
 let () = 
-  Term.eval_choice add_cmd [add_cmd; list_boxes_cmd; edit_cmd]
+  Term.eval_choice add_cmd [add_cmd; list_boxes_cmd; edit_cmd; remove_cmd]
   |> Term.exit 
