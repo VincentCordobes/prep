@@ -1,5 +1,4 @@
 open Base
-open Core
 open Stdio
 open Cmdliner
 
@@ -92,7 +91,7 @@ module Box = struct
 end
 
 let card_not_found card_id = 
-  fprintf stderr "No card found with id %s\n" card_id
+  Out_channel.fprintf stderr "No card found with id %s\n" card_id
 
 
 module Db = struct
@@ -186,7 +185,7 @@ let editor_template =
 # '#' will be ignored, and so does an empty content.|}
 
 let edit_in_editor text =
-  let temp_file, outc = Filename.open_temp_file "editor" "" in
+  let temp_file, outc = Caml.Filename.open_temp_file "editor" "" in
 
   Out_channel.fprintf outc "%s" text;
   Out_channel.close outc;
@@ -208,7 +207,7 @@ let edit_in_editor text =
   let opts = if is_vim then "-c \"set filetype=gitcommit\"" else "" in
   List.exists
     ~f:(fun bin ->
-        Sys.command (Filename.quote bin ^ " " ^ temp_file ^ " " ^ opts) <> 127)
+        Caml.Sys.command (Caml.Filename.quote bin ^ " " ^ temp_file ^ " " ^ opts) <> 127)
     candidates
   |> ignore;
   let content = In_channel.read_all temp_file in
@@ -241,7 +240,7 @@ let add content =
     let updated_db = Db.add card db in
     Db.save updated_db;
     printf "card added (%s)" card.id
-  with Failure msg -> fprintf stderr "%s\n" msg
+  with Failure msg -> Out_channel.fprintf stderr "%s\n" msg
 
 
 let add_cmd = 
@@ -257,7 +256,7 @@ let add_box_cmd =
     let regex = Str.regexp {|\([0-9]+\)\(d\|w\)|} in
     match Str.string_match regex str 0 with
     | true -> (
-        let n = int_of_string (Str.matched_group 1 str) in
+        let n = Int.of_string (Str.matched_group 1 str) in
         let unit_str = Str.matched_group 2 str in
         match unit_str with
         | "d" | "days" | "day" -> `Ok (Frequency.Day n)
@@ -303,6 +302,15 @@ let card_id_arg =
     |> required
   )
 
+let show_card id =
+  let db = Db.load() in
+  let _, card = Db.find_card_exn id db in
+  printf "%s\n" card.content
+
+
+let show_card_cmd =
+  Term.(const show_card $ card_id_arg), Term.info "show"
+
 
 let edit card_id =
   let db = Db.load () in
@@ -337,7 +345,7 @@ let remove id =
     in
     Db.save sp;
     printf "card removed\n"
-  | _ -> fprintf stderr "Multiple card with the same short id.\n" 
+  | _ -> Out_channel.fprintf stderr "Multiple card with the same short id.\n" 
 
 let remove_cmd = Term.(const remove $ card_id_arg), Term.info "remove"
 
@@ -374,6 +382,7 @@ let () =
   Term.eval_choice add_cmd
     [
       list_boxes_cmd;
+      show_card_cmd;
       add_cmd;
       add_box_cmd;
       edit_cmd;

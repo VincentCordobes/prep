@@ -2,9 +2,8 @@
   (name main)
   (package rehearsal)
   (public_name rehearsal)
-	(libraries base
-             core
-             stdio
+	(libraries stdio
+             base
              str
              cmdliner
              uuidm
