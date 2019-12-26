@@ -7,16 +7,16 @@ open Cmdliner
 (* TODO: make type for shor_id and id *)
 
 (* scheduled review *)
-(* newly introduced and difficult flashcards are shown more frequently while older or less diffcult are shown less frequently *)
-module FlashCard = struct
+(* newly introduced and difficult cards are shown more frequently while older or less diffcult are shown less frequently *)
+module Card = struct
   type t = {
     id: string; [@printer fun fmt -> fprintf fmt "%s"]
     content: string;
   } [@@deriving show, yojson]
 
-  let short_id flashcard_id = (Str.first_chars flashcard_id 7)
+  let short_id card_id = (Str.first_chars card_id 7)
 
-  let title flashcard = String.split_lines flashcard.content |> List.hd_exn
+  let title card = String.split_lines card.content |> List.hd_exn
 end
 
 
@@ -60,37 +60,42 @@ module Frequency = struct
 
 end
 
-
 module Box = struct
   type t = {
     frequency: Frequency.t;
-    flashcards: FlashCard.t list;
+    cards: Card.t list;
   } [@@deriving show, yojson]
 
 
-  let create ?(flashcards = []) frequency  =
-    {frequency; flashcards}
+  let create ?(cards = []) frequency  =
+    {frequency; cards}
 
-  let add flashcard box = 
-    {box with flashcards = flashcard :: box.flashcards}
+  let add card box = 
+    {box with cards = card :: box.cards}
 
-  let remove flashcard_id box =
-    {
-      box with
-      flashcards =
-        List.filter box.flashcards ~f:(fun f ->
-            not String.(f.id = flashcard_id));
-    }
+  let set card_id value box =
+    let cards =
+      List.map box.cards ~f:(fun card ->
+          if String.(card.id = card_id) then value else card)
+    in
+    {box with cards}
+
+  let remove card_id box =
+    let cards = 
+      List.filter box.cards ~f:(fun f -> 
+          not String.(f.id = card_id)) 
+    in
+    {box with cards}
 
   let equals a b =
     Frequency.equals a.frequency b.frequency
 end
 
-let flashcard_not_found flashcard_id = 
-  fprintf stderr "No flashcard found with id %s\n" flashcard_id
+let card_not_found card_id = 
+  fprintf stderr "No card found with id %s\n" card_id
 
 
-module Spaced_repetition = struct
+module Db = struct
   (** sorted *)
   type t = {boxes: Box.t list} 
   [@@deriving show, yojson {exn = true}]
@@ -103,12 +108,12 @@ module Spaced_repetition = struct
             Frequency.compare a.frequency b.frequency);
     }
 
-  let add flashcard ?(at = 0) sp =
+  let add card ?(at = 0) sp =
     let rec add i boxes =
       match boxes with
-      | [] -> [Box.add flashcard (Box.create (Frequency.Day 1))]
+      | [] -> [Box.add card (Box.create (Frequency.Day 1))]
       | boxe :: boxes ->
-        if i = at then Box.add flashcard boxe :: boxes
+        if i = at then Box.add card boxe :: boxes
         else boxe :: add (i - 1) boxes
     in
     let boxes = add 0 sp.boxes in
@@ -125,50 +130,50 @@ module Spaced_repetition = struct
     Yojson.Safe.to_file "db.json" boxes_json
 
 
-  let all_flashcards sp =
-    List.bind sp.boxes ~f:(fun box -> box.flashcards)
+  let all_cards sp =
+    List.bind sp.boxes ~f:(fun box -> box.cards)
 
 
-  let find_flashcard_exn flashcard_id sp =
-    let box_flashcards =  
+  let find_card_exn card_id sp =
+    let box_cards =  
       List.foldi
         sp.boxes
         ~init:(Hashtbl.Poly.create ()) 
         ~f:(fun i table box -> 
-            List.iter box.flashcards ~f:(fun flashcard -> 
-                Hashtbl.add table ~key:flashcard.id ~data:(i, flashcard) |> ignore
+            List.iter box.cards ~f:(fun card -> 
+                Hashtbl.add table ~key:card.id ~data:(i, card) |> ignore
               ) ;
             table) in
-   Hashtbl.find_exn box_flashcards flashcard_id
+   Hashtbl.find_exn box_cards card_id
 
-  let find_flashcard flashcard_id sp =
+  let find_card card_id sp =
     try
-      let result = find_flashcard_exn flashcard_id sp in
+      let result = find_card_exn card_id sp in
       Some result
     with Not_found_s _ -> None
 
 
-  let move_card_to to_box flashcard_id sp =
-    let from_box, flashcard = find_flashcard_exn flashcard_id sp in
-    let boxes =
-      List.mapi sp.boxes ~f:(fun i box ->
-          if i = from_box then Box.remove flashcard_id box
-          else if i = to_box then Box.add flashcard box
-          else box)
-    in
+  let move_card_to to_box card_id sp =
+    let boxes_count = List.length sp.boxes in
+    if to_box >= boxes_count then
+      sp
+    else
+      let from_box, card = find_card_exn card_id sp in
+      let boxes =
+        List.mapi sp.boxes ~f:(fun i box ->
+            if i = from_box then Box.remove card_id box
+            else if i = to_box then Box.add card box
+            else box)
+      in
 
-    {boxes}
+      {boxes}
 end
-
-
-
-
 
 
 let content_arg =
   Arg.(
     info ["c"; "content"] ~docv:"CONTENT"
-      ~doc:"The content in text of the flashcard"
+      ~doc:"The content in text of the card"
     |> opt (some string) None
     |> value
   )
@@ -188,26 +193,27 @@ let edit_in_editor text =
 
   let candidates =
     match Caml.Sys.getenv_opt "VISUAL" with
-    | Some x -> [ x ]
+    | Some x -> [x]
     | None -> (
         match Caml.Sys.getenv_opt "EDITOR" with
-        | Some x -> [ x ]
+        | Some x -> [x]
         | None -> (
-            match Caml.Sys.getenv_opt "PAGER" with
-            | Some x -> [ x ]
-            | None -> [] ) )
+            match Caml.Sys.getenv_opt "PAGER" with Some x -> [x] | None -> [] ) )
   in
-  let candidates = candidates @ [ "xdg-open"; "open" ] in
-  (List.exists
-     ~f:(fun bin ->
-         Sys.command (Filename.quote bin ^ " " ^ temp_file) <> 127)
-     candidates) |> ignore;
+  let is_vim =
+    List.exists candidates ~f:(fun candidate ->
+        List.mem ["vim"; "nvim"] candidate ~equal:equal_string)
+  in
+  let candidates = candidates @ ["xdg-open"; "open"] in
+  let opts = if is_vim then "-c \"set filetype=gitcommit\"" else "" in
+  List.exists
+    ~f:(fun bin ->
+        Sys.command (Filename.quote bin ^ " " ^ temp_file ^ " " ^ opts) <> 127)
+    candidates
+  |> ignore;
   let content = In_channel.read_all temp_file in
   let comments_regex = Str.regexp {|^#.*|} in
-  let content = 
-    Str.global_replace comments_regex "" content 
-    |> String.strip 
-  in
+  let content = Str.global_replace comments_regex "" content |> String.strip in
   Caml.Sys.remove temp_file;
   content
 
@@ -215,9 +221,9 @@ let edit_in_editor text =
 let rec generate_id db =
   let state = Caml.Random.State.make_self_init () in
   let id = 
-    Uuidm.(v4_gen state () |> to_string |> FlashCard.short_id)
+    Uuidm.(v4_gen state () |> to_string |> Card.short_id)
   in
-  match Spaced_repetition.find_flashcard id db with
+  match Db.find_card id db with
   | Some _ -> generate_id db
   | None -> id
 
@@ -228,88 +234,23 @@ let add content =
     | Some s -> s 
     | None -> edit_in_editor editor_template
   in
-  let db = Spaced_repetition.load () in
+  let db = Db.load () in
   let id = generate_id db in
-  let flashcard : FlashCard.t = {id; content} in
+  let card : Card.t = {id; content} in
   try
-    let updated_db = Spaced_repetition.add flashcard db in
-    Spaced_repetition.save updated_db;
-    printf "Flashcard added (%s)" flashcard.id
+    let updated_db = Db.add card db in
+    Db.save updated_db;
+    printf "card added (%s)" card.id
   with Failure msg -> fprintf stderr "%s\n" msg
 
 
 let add_cmd = 
   Term.(const add $ content_arg), Term.info "add"
 
-
-let list_boxes () =
-  let db = Spaced_repetition.load () in
-  List.iter
-    ~f:(fun {frequency; flashcards} ->
-        printf "Every %s\n" (Frequency.to_string frequency);
-        if List.length flashcards > 0 then (
-          List.iter
-            ~f:(fun flashcard ->
-                printf "* %s %s\n" flashcard.id (FlashCard.title flashcard))
-            flashcards;
-          printf "\n" ))
-    db.boxes
-
-
-let list_boxes_cmd =
-  Term.(const list_boxes $ const ()), Term.info "list-boxes"
-
-let edit () =
-  let content =
-    edit_in_editor
-      {|
-
-# Please enter the content here. Lines starting with 
-# '#' will be ignored, and so does an empty content.|}
-  in
-  printf "What you typed is:\n%s\n" content
-
-
-let edit_cmd = Term.(const edit $ const ()), Term.info "edit"
-
-
-
-
-let remove id =
-  let db = Spaced_repetition.load () in
-  let all_flashcards = Spaced_repetition.all_flashcards db in
-  let matching_flashcards =
-    List.filter all_flashcards ~f:(fun flashcard ->
-        String.(flashcard.id = id))
-  in
-  match matching_flashcards with
-  | [] -> flashcard_not_found id
-  | [flashcard] ->
-    let sp : Spaced_repetition.t =
-      {boxes = List.map db.boxes ~f:(fun boxe -> Box.remove flashcard.id boxe)}
-    in
-    Spaced_repetition.save sp;
-    printf "Flashcard removed\n"
-  | _ -> fprintf stderr "Multiple flashcard with the same short id.\n" 
-
-
-let flashcard_id_arg =
-  Arg.(
-    info [] ~docv:"ID" ~doc:"Id of the flashcard"
-    |> pos 0 (some string) None
-    |> required
-  )
-
-
-
-let remove_cmd = Term.(const remove $ flashcard_id_arg), Term.info "remove"
-
-
 let add_box frequency =
-  let db = Spaced_repetition.load () in
-  Spaced_repetition.save
-    (Spaced_repetition.add_box {frequency; flashcards = []} db)
-
+  let db = Db.load () in
+  Db.save
+    (Db.add_box {frequency; cards = []} db)
 
 let add_box_cmd =
   let parse_frequency str =
@@ -337,14 +278,77 @@ let add_box_cmd =
   in
   (Term.(const add_box $ frequency_arg), Term.info "add-box")
 
-let move_card flashcard_id box_id =
-  let db = Spaced_repetition.load () in
-  try 
-    Spaced_repetition.move_card_to box_id flashcard_id db
-    |> Spaced_repetition.save
-  with
-  | Not_found_s _ -> flashcard_not_found flashcard_id
+let list_boxes () =
+  let db = Db.load () in
+  List.iter
+    ~f:(fun {frequency; cards} ->
+        printf "Every %s\n" (Frequency.to_string frequency);
+        if List.length cards > 0 then (
+          List.iter
+            ~f:(fun card ->
+                printf "* %s %s\n" card.id (Card.title card))
+            cards;
+          printf "\n" ))
+    db.boxes
 
+
+let list_boxes_cmd =
+  Term.(const list_boxes $ const ()), Term.info "list-boxes"
+
+
+let card_id_arg =
+  Arg.(
+    info [] ~docv:"ID" ~doc:"Id of the card"
+    |> pos 0 (some string) None
+    |> required
+  )
+
+
+let edit card_id =
+  let db = Db.load () in
+  let box_id, card = Db.find_card_exn card_id db in
+  let new_content = edit_in_editor (card.content ^ editor_template) in
+  Db.save
+    {
+      boxes =
+        List.mapi db.boxes ~f:(fun i box ->
+            if i = box_id then
+              let new_card = {card with content = new_content} in
+              Box.set card_id new_card box
+            else box);
+    }
+    
+
+let edit_cmd = Term.(const edit $ card_id_arg), Term.info "edit"
+
+
+let remove id =
+  let db = Db.load () in
+  let all_cards = Db.all_cards db in
+  let matching_cards =
+    List.filter all_cards ~f:(fun card ->
+        String.(card.id = id))
+  in
+  match matching_cards with
+  | [] -> card_not_found id
+  | [card] ->
+    let sp : Db.t =
+      {boxes = List.map db.boxes ~f:(fun boxe -> Box.remove card.id boxe)}
+    in
+    Db.save sp;
+    printf "card removed\n"
+  | _ -> fprintf stderr "Multiple card with the same short id.\n" 
+
+let remove_cmd = Term.(const remove $ card_id_arg), Term.info "remove"
+
+
+let move_card card_id box_id =
+  let db = Db.load () in
+  try 
+    Db.move_card_to box_id card_id db
+    |> Db.save
+  with
+  | Not_found_s _ -> card_not_found card_id
 
 let move_card_cmd =
   let box_id_arg =
@@ -353,9 +357,28 @@ let move_card_cmd =
       |> pos ~rev:true 0 (some int) None
       |> required
     ) in
-  (Term.(const move_card $ flashcard_id_arg $ box_id_arg), Term.info "move")
+  (Term.(const move_card $ card_id_arg $ box_id_arg), Term.info "move")
+
+
+let move_up card_id =
+  let db = Db.load () in
+  let box_id, _ = Db.find_card_exn card_id db in
+  Db.move_card_to (box_id + 1) card_id db
+  |> Db.save
+
+
+let move_up_cmd =
+  (Term.(const move_up $ card_id_arg), Term.info "move-up")
 
 let () =
   Term.eval_choice add_cmd
-    [add_cmd; list_boxes_cmd; edit_cmd; remove_cmd; move_card_cmd; add_box_cmd]
+    [
+      list_boxes_cmd;
+      add_cmd;
+      add_box_cmd;
+      edit_cmd;
+      remove_cmd;
+      move_card_cmd;
+      move_up_cmd;
+    ]
   |> Term.exit
