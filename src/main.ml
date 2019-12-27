@@ -24,7 +24,6 @@ module Frequency = struct
 
   type t = Day of int | Week of int [@@deriving show]
 
-
   let of_yojson frequency = 
     let value =
       frequency |> member "value" |> to_int 
@@ -90,8 +89,9 @@ module Box = struct
     Frequency.equals a.frequency b.frequency
 end
 
-let card_not_found card_id = 
-  Out_channel.fprintf stderr "No card found with id %s\n" card_id
+let exit_card_not_found card_id = 
+  Out_channel.fprintf stderr "No card found with id %s\n" card_id;
+  Caml.exit 1
 
 
 module Db = struct
@@ -132,8 +132,7 @@ module Db = struct
   let all_cards sp =
     List.bind sp.boxes ~f:(fun box -> box.cards)
 
-
-  let find_card_exn card_id sp =
+  let find_card card_id sp =
     let box_cards =  
       List.foldi
         sp.boxes
@@ -143,21 +142,28 @@ module Db = struct
                 Hashtbl.add table ~key:card.id ~data:(i, card) |> ignore
               ) ;
             table) in
-   Hashtbl.find_exn box_cards card_id
+    Hashtbl.find box_cards card_id
 
-  let find_card card_id sp =
-    try
-      let result = find_card_exn card_id sp in
-      Some result
-    with Not_found_s _ -> None
+
+  let find_card_or_exit card_id sp =
+    match find_card card_id sp with
+    | Some result -> result
+    | None -> exit_card_not_found card_id 
+
+
+  let exists card_id sp =
+    let result = find_card card_id sp in
+    match result with
+    | Some _ -> true
+    | None -> false
 
 
   let move_card_to to_box card_id sp =
     let boxes_count = List.length sp.boxes in
-    if to_box >= boxes_count then
+    if to_box < 0 || to_box >= boxes_count then
       sp
     else
-      let from_box, card = find_card_exn card_id sp in
+      let from_box, card = find_card_or_exit card_id sp in
       let boxes =
         List.mapi sp.boxes ~f:(fun i box ->
             if i = from_box then Box.remove card_id box
@@ -304,7 +310,7 @@ let card_id_arg =
 
 let show_card id =
   let db = Db.load() in
-  let _, card = Db.find_card_exn id db in
+  let _, card = Db.find_card_or_exit id db in
   printf "%s\n" card.content
 
 
@@ -314,7 +320,7 @@ let show_card_cmd =
 
 let edit card_id =
   let db = Db.load () in
-  let box_id, card = Db.find_card_exn card_id db in
+  let box_id, card = Db.find_card_or_exit card_id db in
   let new_content = edit_in_editor (card.content ^ editor_template) in
   Db.save
     {
@@ -330,33 +336,28 @@ let edit card_id =
 let edit_cmd = Term.(const edit $ card_id_arg), Term.info "edit"
 
 
-let remove id =
+let remove card_id =
   let db = Db.load () in
-  let all_cards = Db.all_cards db in
-  let matching_cards =
-    List.filter all_cards ~f:(fun card ->
-        String.(card.id = id))
+  let box_id, card = Db.find_card_or_exit card_id db in
+  let sp : Db.t =
+    {
+      boxes =
+        List.mapi db.boxes ~f:(fun i box ->
+            if i = box_id then Box.remove card.id box else box);
+    }
   in
-  match matching_cards with
-  | [] -> card_not_found id
-  | [card] ->
-    let sp : Db.t =
-      {boxes = List.map db.boxes ~f:(fun boxe -> Box.remove card.id boxe)}
-    in
-    Db.save sp;
-    printf "card removed\n"
-  | _ -> Out_channel.fprintf stderr "Multiple card with the same short id.\n" 
+  Db.save sp;
+  printf "card removed\n"
+
 
 let remove_cmd = Term.(const remove $ card_id_arg), Term.info "remove"
 
 
 let move_card card_id box_id =
   let db = Db.load () in
-  try 
-    Db.move_card_to box_id card_id db
-    |> Db.save
-  with
-  | Not_found_s _ -> card_not_found card_id
+  Db.move_card_to (box_id - 1) card_id db
+  |> Db.save
+
 
 let move_card_cmd =
   let box_id_arg =
@@ -370,13 +371,23 @@ let move_card_cmd =
 
 let move_up card_id =
   let db = Db.load () in
-  let box_id, _ = Db.find_card_exn card_id db in
+  let box_id, _ = Db.find_card_or_exit card_id db in
   Db.move_card_to (box_id + 1) card_id db
   |> Db.save
 
-
 let move_up_cmd =
   (Term.(const move_up $ card_id_arg), Term.info "move-up")
+
+
+let move_down card_id =
+  let db = Db.load () in
+  let box_id, _ = Db.find_card_or_exit card_id db in
+  Db.move_card_to (box_id - 1) card_id db
+  |> Db.save
+
+
+let move_down_cmd =
+  (Term.(const move_down $ card_id_arg), Term.info "move-down")
 
 let () =
   Term.eval_choice add_cmd
@@ -389,5 +400,6 @@ let () =
       remove_cmd;
       move_card_cmd;
       move_up_cmd;
+      move_down_cmd;
     ]
   |> Term.exit
