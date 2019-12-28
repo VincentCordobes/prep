@@ -1,9 +1,10 @@
 (test
   (name test)
-  (libraries alcotest))
+  (libraries alcotest
+             rehearsal.lib))
 
 (alias
   (name  runtest)
   (package rehearsal)
-  (deps test.exe)
-  (action (run ./test.exe --color=always))) 
+  (deps (:exe test.exe))
+  (action (run %{exe} --color=always))) 
