@@ -2,6 +2,11 @@ open Base
 open Stdio
 open Cmdliner
 
+
+let exit_err msg =
+  Console.print_error "%s" msg;
+  Caml.exit 1
+
 let add content =
   let content =
     match content with 
@@ -18,10 +23,9 @@ let add content =
     try
       let updated_store = Store.add card store in
       Store.save updated_store;
-      Fmt.pr "Card added (%s)\n" card.id;
-      `Ok ()
-    with Failure msg -> `Error (false, msg)) 
-  | Error msg -> `Error (false, msg)
+      Fmt.pr "Card added (%s)\n" card.id
+    with Failure msg -> exit_err msg)
+  | Error msg -> exit_err msg
 
 
 
@@ -31,9 +35,10 @@ let add_box interval =
     List.exists store.boxes ~f:(fun box ->
         Interval.compare box.interval interval = 0)
   in
-  if box_exists then
+  if box_exists then (
     Console.(print_error "A box with interval %a already exists" green_s)
-    @@ Interval.to_string interval
+    @@ Interval.to_string interval;
+    Caml.exit 1)
   else Store.save (Store.add_box {interval; cards = []} store)
 
 
@@ -109,7 +114,7 @@ let content_arg =
   )
 
 let add_cmd = 
-  Term.(ret(const add $ content_arg)), Term.info "add" ~exits:Term.default_exits
+  Term.(const add $ content_arg), Term.info "add" ~exits:Term.default_exits
 
 
 let add_box_cmd =
