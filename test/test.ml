@@ -1,5 +1,4 @@
 open Alcotest
-(* open Rehearsal *)
 
 let list_cards () =
   check int  "same string" 4 4

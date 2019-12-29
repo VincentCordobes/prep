@@ -1,7 +1,7 @@
-(test
+(executable
   (name test)
   (libraries alcotest
-             rehearsal.lib))
+             rehearsal))
 
 (alias
   (name  runtest)

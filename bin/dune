@@ -1,0 +1,10 @@
+(executable
+  (name main)
+  (libraries rehearsal
+             fmt
+             fmt.tty
+             cmdliner))
+
+(install
+    (section bin)
+    (files (main.exe as rehearsal)))

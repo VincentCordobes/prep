@@ -1,7 +1,6 @@
 (library
   (name rehearsal)
-  (public_name rehearsal.lib)
-  (modules (:standard \ cli))
+  (public_name rehearsal)
 	(libraries stdio
              base
              str
@@ -9,14 +8,7 @@
              re
              fmt
              fmt.tty
+             cmdliner
              yojson
              ppx_deriving_yojson.runtime)
-  (preprocess (pps ppx_deriving.show ppx_deriving_yojson)))
-
-(executable
-  (name cli)
-  (public_name rehearsal)
-  (package rehearsal)
-  (modules cli)
-	(libraries base rehearsal cmdliner)
   (preprocess (pps ppx_deriving.show ppx_deriving_yojson)))

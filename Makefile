@@ -17,7 +17,7 @@ test:
 	dune runtest -f
 
 clean:
-	dune clean
+	dune clean && rm -rf ./_build *.opam *.merlin
 
 start:
 	dune exec src/main.exe --profile release

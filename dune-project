@@ -13,10 +13,3 @@
  (depends
   (ocaml (>= 4.08))
   (dune (>= 1.11))))
-
-(package
- (name rehearsal.lib)
- (synopsis "Learn new skills based on the spaced repetition idea")
- (depends
-  (ocaml (>= 4.08))
-  (dune (>= 1.11))))
