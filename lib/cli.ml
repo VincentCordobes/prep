@@ -136,7 +136,7 @@ let add_box_cmd =
 let list_boxes_cmd =
   Term.(const list_boxes $ const ()), Term.info "list-boxes"
 
-
+ 
 let card_id_arg =
   Arg.(
     info [] ~docv:"ID" ~doc:"Id of the card"
@@ -171,8 +171,34 @@ let move_up_cmd =
 
 
 let move_down_cmd =
-  (Term.(const move_down $ card_id_arg), Term.info "move-down")
+  Term.(const move_down $ card_id_arg), Term.info "move-down"
 
-(* let list_today () = *)
-(*   let db = Db.load() in *)
+
+let review card_id rating =
+  let store = Store.load () in
+  let _, card = Store.find_card_or_exit card_id store in
+  let raw_rating =
+    match rating with
+    | None ->
+      Fmt.pr "Review (1-5) %a: %!" Console.green_s @@ Card.title card;
+      In_channel.input_line_exn stdin
+    | Some value -> value
+  in
+  if String.(raw_rating = "") then (
+    Console.print_error "No rating entered";
+    Caml.exit 1 );
+  match Card.Review.create (Int.of_string raw_rating) with
+  | Ok value -> printf "Your rating: %d\n" @@ Card.Review.to_string value
+  | Error msg ->
+      Console.print_error "%s" msg;
+      Caml.exit 1
+
+let review_cmd =
+  let review_value_arg =
+    Arg.(
+      info [] ~docv:"VALUE" ~doc:"Review value"
+      |> pos 1 (some string) None
+      |> value)
+  in
+  (Term.(const review $ card_id_arg $ review_value_arg), Term.info "review")
 

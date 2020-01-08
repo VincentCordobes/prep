@@ -26,3 +26,13 @@ let create (id: Id.t) content =
 
 let title card = Base.(String.split_lines card.content |> List.hd_exn)
 
+
+module Review = struct
+  type t = int
+
+  let create rating =
+    if rating > 0 && rating <= 5 then Ok rating
+    else Error "Rating must be in the range [1 - 5]"
+
+  let to_string rating = rating
+end

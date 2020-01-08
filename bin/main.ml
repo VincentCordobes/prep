@@ -21,5 +21,6 @@ let () =
       move_card_cmd;
       move_up_cmd;
       move_down_cmd;
+      review_cmd;
     ]
   |> Term.exit
