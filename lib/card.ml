@@ -27,12 +27,19 @@ let create (id: Id.t) content =
 let title card = Base.(String.split_lines card.content |> List.hd_exn)
 
 
-module Review = struct
-  type t = int
+module Rating = struct
+  type t = Bad | Again | Good | Easy
 
-  let create rating =
-    if rating > 0 && rating <= 5 then Ok rating
-    else Error "Rating must be in the range [1 - 5]"
+  let from_int = function
+    | 1 -> Ok Bad
+    | 2 -> Ok Again
+    | 3 -> Ok Good 
+    | 4 -> Ok Easy
+    | _ -> Error "Rating must be in the range [1 - 4]"
 
-  let to_string rating = rating
+  let to_string = function
+    | Bad -> "Bad"
+    | Again -> "Again"
+    | Good -> "Good "
+    | Easy -> "Easy"
 end

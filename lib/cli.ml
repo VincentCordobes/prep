@@ -23,7 +23,7 @@ let add content =
     try
       let updated_store = Store.add card store in
       Store.save updated_store;
-      Fmt.pr "Card added (%s)\n" card.id
+      Fmt.pr "Card added (id: %s)\n" card.id
     with Failure msg -> exit_err msg)
   | Error msg -> exit_err msg
 
@@ -92,7 +92,7 @@ let move_card card_id box_id =
   |> Store.save
 
 
-let move_up card_id =
+let graduate card_id =
   let store = Store.load () in
   let box_id, _ = Store.find_card_or_exit card_id store in
   Store.move_card_to (box_id + 1) card_id store
@@ -166,39 +166,51 @@ let move_card_cmd =
 
 
 
-let move_up_cmd =
-  (Term.(const move_up $ card_id_arg), Term.info "move-up")
+let graduate_cmd =
+  (Term.(const graduate $ card_id_arg), Term.info "move-up")
 
 
 let move_down_cmd =
   Term.(const move_down $ card_id_arg), Term.info "move-down"
 
 
-let review card_id rating =
+let rate card_id rating =
   let store = Store.load () in
   let _, card = Store.find_card_or_exit card_id store in
   let raw_rating =
     match rating with
     | None ->
-      Fmt.pr "Review (1-5) %a: %!" Console.green_s @@ Card.title card;
+      Fmt.pr "Rate (1-4) %a: %!" Console.green_s @@ Card.title card;
       In_channel.input_line_exn stdin
     | Some value -> value
   in
   if String.(raw_rating = "") then (
-    Console.print_error "No rating entered";
+    Console.print_error "invalid rating";
     Caml.exit 1 );
-  match Card.Review.create (Int.of_string raw_rating) with
-  | Ok value -> printf "Your rating: %d\n" @@ Card.Review.to_string value
+  match Card.Rating.from_int (Int.of_string raw_rating) with
+  | Ok rating -> 
+      (match rating with
+      | Bad | Again -> 
+        store 
+        |> Store.move_card_to 0 card_id 
+        |> Store.save
+      | Good -> graduate card_id
+      | Easy ->
+        store
+        |> Store.move_card_to ((List.length store.boxes) - 1) card_id
+        |> Store.save);
+       Fmt.pr "Your rating: %a\n" Console.magenta_s @@ Card.Rating.to_string rating
+    
   | Error msg ->
-      Console.print_error "%s" msg;
-      Caml.exit 1
+    Console.print_error "%s" msg;
+    Caml.exit 1
 
-let review_cmd =
-  let review_value_arg =
+let rate_cmd =
+  let rating_arg =
     Arg.(
-      info [] ~docv:"VALUE" ~doc:"Review value"
+      info [] ~docv:"RATING" ~doc:"Rating value"
       |> pos 1 (some string) None
       |> value)
   in
-  (Term.(const review $ card_id_arg $ review_value_arg), Term.info "review")
+  (Term.(const rate $ card_id_arg $ rating_arg), Term.info "rate")
 

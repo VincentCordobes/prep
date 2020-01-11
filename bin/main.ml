@@ -19,8 +19,9 @@ let () =
       edit_cmd;
       remove_cmd;
       move_card_cmd;
-      move_up_cmd;
+      graduate_cmd;
       move_down_cmd;
-      review_cmd;
+      rate_cmd;
+       (* deck;  start a rehearsal session with the specifi deck *)
     ]
   |> Term.exit

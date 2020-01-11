@@ -67,15 +67,15 @@ let exists card_id store =
 
 let move_card_to to_box card_id store =
   let boxes_count = List.length store.boxes in
-  if to_box < 0 || to_box >= boxes_count then
-    store
+  if to_box < 0 || to_box >= boxes_count then store
   else
     let from_box, card = find_card_or_exit card_id store in
-    let boxes =
-      List.mapi store.boxes ~f:(fun i box ->
-          if i = from_box then Box.remove card_id box
-          else if i = to_box then Box.add card box
-          else box)
-    in
-
-    {boxes}
+    if from_box = to_box then store
+    else
+      let boxes =
+        List.mapi store.boxes ~f:(fun i box ->
+            if i = from_box then Box.remove card_id box
+            else if i = to_box then Box.add card box
+            else box)
+      in
+      {boxes}
