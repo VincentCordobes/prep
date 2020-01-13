@@ -42,14 +42,18 @@ let add_box interval =
   else Store.save (Store.add_box {interval; cards = []} store)
 
 
+let print_cards cards =
+  let print_card (card : Card.t) =
+    Fmt.pr "* %a %s\n%!" Console.yellow_s card.id @@ Card.title card
+  in
+  List.iter cards ~f:print_card
+
+
 let list_boxes () =
   let store = Store.load () in
   List.iter store.boxes ~f:(fun {interval; cards} ->
       printf "Every %s\n" @@ Interval.to_string interval;
-      if List.length cards > 0 then (
-        List.iter cards ~f:(fun card ->
-            printf "* %s %s\n" card.id @@ Card.title card);
-        printf "\n" ))
+      if List.length cards > 0 then print_cards cards)
 
 let show_card id =
   let store = Store.load () in
@@ -91,12 +95,6 @@ let move_card card_id box_id =
   Store.move_card_to (box_id - 1) card_id store
   |> Store.save
 
-
-let graduate card_id =
-  let store = Store.load () in
-  let box_id, _ = Store.find_card_or_exit card_id store in
-  Store.move_card_to (box_id + 1) card_id store
-  |> Store.save
 
 
 let move_down card_id =
@@ -166,21 +164,17 @@ let move_card_cmd =
 
 
 
-let graduate_cmd =
-  (Term.(const graduate $ card_id_arg), Term.info "move-up")
-
-
 let move_down_cmd =
   Term.(const move_down $ card_id_arg), Term.info "move-down"
 
 
 let rate card_id rating =
   let store = Store.load () in
-  let _, card = Store.find_card_or_exit card_id store in
+  let box_id, card = Store.find_card_or_exit card_id store in
   let raw_rating =
     match rating with
     | None ->
-      Fmt.pr "Rate (1-4) %a: %!" Console.green_s @@ Card.title card;
+      Fmt.pr "Rate (0-3) %a: %!" Console.green_s @@ Card.title card;
       In_channel.input_line_exn stdin
     | Some value -> value
   in
@@ -190,15 +184,26 @@ let rate card_id rating =
   match Card.Rating.from_int (Int.of_string raw_rating) with
   | Ok rating -> 
       (match rating with
-      | Bad | Again -> 
+      | Bad -> 
         store 
         |> Store.move_card_to 0 card_id 
         |> Store.save
-      | Good -> graduate card_id
+
+      | Again -> 
+        store
+        |> Store.move_card_to (box_id - 1) card_id
+        |> Store.save
+
+      | Good -> 
+        store
+        |> Store.move_card_to (box_id + 1) card_id
+        |> Store.save
+
       | Easy ->
         store
         |> Store.move_card_to ((List.length store.boxes) - 1) card_id
         |> Store.save);
+
        Fmt.pr "Your rating: %a\n" Console.magenta_s @@ Card.Rating.to_string rating
     
   | Error msg ->
@@ -214,3 +219,23 @@ let rate_cmd =
   in
   (Term.(const rate $ card_id_arg $ rating_arg), Term.info "rate")
 
+
+let review () =
+  let now = Unix.time () in
+  let should_review (interval : Interval.t) (card : Card.t) =
+    Float.(
+      let interval =
+        match interval with
+        | Day n -> of_int n * 24.0 * 60.0
+        | Week n -> of_int n * 7.0 * 24.0 * 60.0
+      in
+      (card.last_reviewed_at + interval) <= now)
+  in
+  let store = Store.load () in
+  List.bind store.boxes ~f:(fun box ->
+      List.filter box.cards ~f:(should_review box.interval))
+  |> print_cards
+
+
+let review_cmd =
+  (Term.(const review $ const ()), Term.info "review")

@@ -1,4 +1,8 @@
-type t = {id : string; content : string} [@@deriving show, yojson]
+type t = {
+  id: string; 
+  content: string; 
+  last_reviewed_at: float
+} [@@deriving show, yojson]
 
 val create: string -> string -> (t, string) result
 

@@ -70,12 +70,16 @@ let move_card_to to_box card_id store =
   if to_box < 0 || to_box >= boxes_count then store
   else
     let from_box, card = find_card_or_exit card_id store in
-    if from_box = to_box then store
-    else
-      let boxes =
-        List.mapi store.boxes ~f:(fun i box ->
-            if i = from_box then Box.remove card_id box
-            else if i = to_box then Box.add card box
-            else box)
-      in
-      {boxes}
+    let boxes =
+      List.mapi store.boxes ~f:(fun i box ->
+          let box = 
+          if i = from_box then Box.remove card_id box
+          else box in
+
+          if i = to_box then
+            Box.add {card with last_reviewed_at = Unix.time ()} box
+          else box
+        )
+    in
+    {boxes}
+
