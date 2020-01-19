@@ -1,10 +1,10 @@
 (executable
   (name main)
-  (libraries rehearsal
+  (libraries prep
              fmt
              fmt.tty
              cmdliner))
 
 (install
     (section bin)
-    (files (main.exe as rehearsal)))
+    (files (main.exe as prep)))

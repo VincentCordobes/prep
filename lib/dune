@@ -1,6 +1,6 @@
 (library
-  (name rehearsal)
-  (public_name rehearsal)
+  (name prep)
+  (public_name prep)
 	(libraries stdio
              base
              str

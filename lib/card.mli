@@ -16,7 +16,7 @@ end
 
 module Rating : sig
   type t = Bad | Again | Good | Easy
-  (** Rating of the card during a rehearsal session:
+  (** Rating of the card during a practice session:
       `Bad:   We made some mistakes we have to repeat it again.
                   The card is moved to the first box 
       `Again: Little mistakes.

@@ -1,14 +1,15 @@
 open Cmdliner
-open Rehearsal.Cli
+open Prep.Cli
 
 let default_cmd =
   let doc = "A spaced-repetition tool" in
   let sdocs = Manpage.s_common_options in
   let exits = Term.default_exits in
   Term.(ret (const (fun _ -> `Help (`Pager, None)) $ const ())),
-  Term.info "rehearsal" ~version:"v1.0" ~doc ~sdocs ~exits 
+  Term.info "prep" ~version:"v1.0" ~doc ~sdocs ~exits 
 
 let () =
+  Prep.Store.init ();
   Fmt_tty.setup_std_outputs ~style_renderer:`Ansi_tty ();
   Term.eval_choice default_cmd
     [
@@ -23,6 +24,6 @@ let () =
       rate_cmd;
       review_cmd;
 (* interactive_cmd *)
-       (* deck;  start a rehearsal session with the specifi deck *)
+       (* deck;  start a practice session with the specifi deck *)
     ]
   |> Term.exit

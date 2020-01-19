@@ -16,7 +16,7 @@ let suite = [
 
 
 let () =
-  run "Rehearsal" [
+  run "Prep" [
     "review", build suite;
   ]
 

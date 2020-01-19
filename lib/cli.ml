@@ -43,9 +43,11 @@ let add_box interval =
 
 
 let print_cards cards =
-  List.iter cards ~f:(fun (card : Card.t) ->
-      Fmt.pr "* %a %s\n" Console.yellow_s card.id @@ Card.title card);
-  if List.length cards > 0 then Fmt.pr "\n"
+  let open Card in 
+  if List.length cards > 0 then
+    List.iter cards ~f:(fun card ->
+        Fmt.pr "* %a %s\n" Console.yellow_s card.id @@ title card)
+  else Fmt.pr "No card.\n"
 
 
 let list_boxes () =

@@ -5,7 +5,7 @@ type t = {boxes: Box.t list}
 [@@deriving show, yojson {exn = true}]
 
 
-let app_dir = ".config/rehearsal"
+let app_dir = ".config/prep"
 let store_name = "store.json"
 
 let home = Sys.getenv "HOME"
@@ -100,7 +100,7 @@ let default_store () =
   |> add_box @@ Box.create @@ Week 6
 
 
-let init =
+let init () =
   if Sys.file_exists store_path then ()
   else
     let app_dir = home ^ "/" ^ app_dir in
