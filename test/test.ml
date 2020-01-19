@@ -1,11 +1,24 @@
 open Alcotest
 
-let list_cards () =
-  check int  "same string" 4 4
+let build suite =
+  (List.map (fun (name, cb) -> test_case name `Quick cb) suite)
+
+
+let suite = [
+  ("should list cards c where last_reviewed_at(c) + interval(b) = now", fun () -> 
+      check int "same string" 4 4
+  );
+
+  ("should list cards c where last_reviewed_at(c) + interval(b) = now", fun () -> 
+      check int "same string" 4 4
+  );
+]
+
 
 let () =
   run "Rehearsal" [
-    "list-cards", [
-      test_case "date is exactly last(c) + interval(c)" `Quick list_cards;
-    ];
+    "review", build suite;
   ]
+
+
+

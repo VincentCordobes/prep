@@ -43,22 +43,22 @@ let add_box interval =
 
 
 let print_cards cards =
-  let print_card (card : Card.t) =
-    Fmt.pr "* %a %s\n%!" Console.yellow_s card.id @@ Card.title card
-  in
-  List.iter cards ~f:print_card
+  List.iter cards ~f:(fun (card : Card.t) ->
+      Fmt.pr "* %a %s\n" Console.yellow_s card.id @@ Card.title card);
+  if List.length cards > 0 then Fmt.pr "\n"
 
 
 let list_boxes () =
   let store = Store.load () in
   List.iter store.boxes ~f:(fun {interval; cards} ->
-      printf "Every %s\n" @@ Interval.to_string interval;
-      if List.length cards > 0 then print_cards cards)
+      Fmt.pr "Every %s\n" (Interval.to_string interval);
+      print_cards cards
+    )
 
 let show_card id =
   let store = Store.load () in
   let _, card = Store.find_card_or_exit id store in
-  printf "%s\n" card.content
+  Fmt.pr "%s\n" card.content
 
 
 let edit card_id =
@@ -73,7 +73,8 @@ let edit card_id =
               let new_card = {card with content = new_content} in
               Box.set card_id new_card box
             else box);
-    }
+    };
+  Fmt.pr "Edited card %a %s\n" Console.yellow_s card_id @@ Card.title card
 
 
 let remove card_id =
@@ -87,7 +88,7 @@ let remove card_id =
     }
   in
   Store.save sp;
-  printf "Card removed\n"
+  Fmt.pr "Card removed\n"
 
 
 let move_card card_id box_id =
@@ -118,7 +119,7 @@ let add_cmd =
 let add_box_cmd =
   let interval  =
     ( Interval.of_string,
-      fun ppf interval -> Caml.Format.fprintf ppf "%s" (Interval.show interval) )
+      fun ppf interval -> Fmt.pf ppf "%s" (Interval.show interval) )
   in
   let interval_arg =
     Arg.(
@@ -220,8 +221,7 @@ let rate_cmd =
   (Term.(const rate $ card_id_arg $ rating_arg), Term.info "rate")
 
 
-let review () =
-  let now = Unix.time () in
+let review (now) =
   let should_review (interval : Interval.t) (card : Card.t) =
     Float.(
       let interval =
@@ -238,4 +238,5 @@ let review () =
 
 
 let review_cmd =
-  (Term.(const review $ const ()), Term.info "review")
+  let now = Unix.time () in
+  (Term.(const review $ const now), Term.info "review")

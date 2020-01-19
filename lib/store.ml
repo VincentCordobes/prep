@@ -1,11 +1,15 @@
-(** sorted *)
-open Base
+module List = Base.List
+module Hashtbl = Base.Hashtbl
 
 type t = {boxes: Box.t list} 
 [@@deriving show, yojson {exn = true}]
 
 
-let store_path = "store.json"
+let app_dir = ".config/rehearsal"
+let store_name = "store.json"
+
+let home = Sys.getenv "HOME"
+let store_path = Fmt.str "%s/%s/%s" home app_dir store_name
 
 let load () = 
   let json_value = Yojson.Safe.from_file store_path in
@@ -15,6 +19,7 @@ let load () =
 let save store =
   let boxes_json = to_yojson store in
   Yojson.Safe.to_file store_path boxes_json
+
 
 let add_box box store =
   {
@@ -83,3 +88,22 @@ let move_card_to to_box card_id store =
     in
     {boxes}
 
+
+let empty_store () =
+  {boxes = []}
+
+let default_store () =
+  empty_store ()
+  |> add_box @@ Box.create @@ Day 3
+  |> add_box @@ Box.create @@ Week 1
+  |> add_box @@ Box.create @@ Day 8
+  |> add_box @@ Box.create @@ Week 6
+
+
+let init =
+  if Sys.file_exists store_path then ()
+  else
+    let app_dir = home ^ "/" ^ app_dir in
+    if not (Sys.file_exists app_dir) then 
+      Util.mkdir_p app_dir 0o777;
+    default_store () |> save
