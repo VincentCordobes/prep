@@ -1,5 +1,4 @@
 open Base
-open Stdio
 open Cmdliner
 
 
@@ -121,7 +120,7 @@ let add_cmd =
 let add_box_cmd =
   let interval  =
     ( Interval.of_string,
-      fun ppf interval -> Fmt.pf ppf "%s" (Interval.show interval) )
+      fun ppf -> Fmt.pf ppf "%a" Interval.pp )
   in
   let interval_arg =
     Arg.(
@@ -141,7 +140,7 @@ let list_boxes_cmd =
 let card_id_arg =
   Arg.(
     info [] ~docv:"ID" ~doc:"Id of the card"
-    |> pos 0 (some string) None
+    |> pos ~rev:true 0 (some string) None
     |> required
   )
 
@@ -171,56 +170,54 @@ let move_down_cmd =
   Term.(const move_down $ card_id_arg), Term.info "move-down"
 
 
-let rate card_id rating =
+let rate (rating: Card.Rating.t) card_id =
+  let open Card.Rating in
   let store = Store.load () in
-  let box_id, card = Store.find_card_or_exit card_id store in
-  let raw_rating =
-    match rating with
-    | None ->
-      Fmt.pr "Rate (0-3) %a: %!" Console.green_s @@ Card.title card;
-      In_channel.input_line_exn stdin
-    | Some value -> value
-  in
-  if String.(raw_rating = "") then (
-    Console.print_error "invalid rating";
-    Caml.exit 1 );
-  match Card.Rating.from_int (Int.of_string raw_rating) with
-  | Ok rating -> 
-      (match rating with
-      | Bad -> 
-        store 
-        |> Store.move_card_to 0 card_id 
-        |> Store.save
+  let box_id, _ = Store.find_card_or_exit card_id store in
+  (match rating with
+   | Bad -> 
+     store 
+     |> Store.move_card_to 0 card_id 
+     |> Store.save
 
-      | Again -> 
-        store
-        |> Store.move_card_to (box_id - 1) card_id
-        |> Store.save
+   | Again -> 
+     store
+     |> Store.move_card_to (box_id - 1) card_id
+     |> Store.save
 
-      | Good -> 
-        store
-        |> Store.move_card_to (box_id + 1) card_id
-        |> Store.save
+   | Good -> 
+     store
+     |> Store.move_card_to (box_id + 1) card_id
+     |> Store.save
 
-      | Easy ->
-        store
-        |> Store.move_card_to ((List.length store.boxes) - 1) card_id
-        |> Store.save);
+   | Easy ->
+     store
+     |> Store.move_card_to ((List.length store.boxes) - 1) card_id
+     |> Store.save);
 
-       Fmt.pr "Your rating: %a\n" Console.magenta_s @@ Card.Rating.to_string rating
-    
-  | Error msg ->
-    Console.print_error "%s" msg;
-    Caml.exit 1
+  Fmt.pr "Card rated %a\n" Console.magenta_s
+  @@ String.lowercase
+  @@ Card.Rating.to_string rating
 
 let rate_cmd =
+  let rating = 
+    let parse value = 
+      match Card.Rating.of_string value with
+      | Ok r -> `Ok r
+      | Error msg -> `Error msg 
+    in 
+    let pp ppf = Fmt.pf ppf "%a" Card.Rating.pp in
+    (parse, pp)
+  in
   let rating_arg =
     Arg.(
       info [] ~docv:"RATING" ~doc:"Rating value"
-      |> pos 1 (some string) None
-      |> value)
+      |> pos 0 (some rating) None
+      |> required)
   in
-  (Term.(const rate $ card_id_arg $ rating_arg), Term.info "rate")
+  let action = Term.(const rate $ rating_arg $ card_id_arg ) in
+  let info = Term.info "rate" in
+  (action , info)
 
 
 let review (now) =

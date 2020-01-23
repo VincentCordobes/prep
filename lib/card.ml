@@ -31,6 +31,7 @@ let title card = Base.(String.split_lines card.content |> List.hd_exn)
 
 module Rating = struct
   type t = Bad | Again | Good | Easy
+  [@@deriving show]
 
   let from_int = function
     | 0 -> Ok Bad
@@ -38,6 +39,14 @@ module Rating = struct
     | 2 -> Ok Good 
     | 3 -> Ok Easy
     | _ -> Error "Rating must be in the range [0 - 3]"
+
+  let of_string rating_str = 
+    match rating_str with
+    | "bad" -> Ok Bad
+    | "again" -> Ok Again
+    | "good" -> Ok Good 
+    | "easy" -> Ok Easy
+    | _ -> Error "Rating must be one of bad | again | good | easy"
 
   let to_string = function
     | Bad -> "Bad"
