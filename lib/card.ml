@@ -18,11 +18,19 @@ module Id = struct
     | false -> id
 end
 
-let create (id: Id.t) content =
+let create id content =
   if content = "" then
     Error "content cannot be empty"
   else
     Ok {id; content; last_reviewed_at = Unix.time ()}
+
+
+let generate_id content =
+  let open Base in
+  String.split_lines content 
+  |> List.hd_exn
+  |> String.lowercase
+  |> String.substr_replace_all ~pattern:" " ~with_:"_"
 
 
 let title card = Base.(String.split_lines card.content |> List.hd_exn)

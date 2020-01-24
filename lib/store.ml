@@ -59,7 +59,7 @@ let find_card_or_exit card_id store =
   match find_card card_id store with
   | Some result -> result
   | None ->
-      Console.(print_error "No card found with id %a\n" green_s card_id);
+      Console.(print_error "No card found with id %a\n" yellow_s card_id);
       Caml.exit 1
 
 

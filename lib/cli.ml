@@ -6,25 +6,28 @@ let exit_err msg =
   Console.print_error "%s" msg;
   Caml.exit 1
 
-let add content =
+let rec add content =
   let content =
-    match content with 
-    | Some s -> s 
+    match content with
+    | Some s -> Editor.edit (s ^ Editor.default_template)
     | None -> Editor.edit Editor.default_template
   in
   let store = Store.load () in
-  let id_exists id =
-    Option.is_some @@ Store.find_card id store
-  in
-  let id = Card.Id.generate id_exists in
-  match Card.create id content with
-  | Ok card -> (
-    try
-      let updated_store = Store.add card store in
-      Store.save updated_store;
-      Fmt.pr "Card added (id: %s)\n" card.id
-    with Failure msg -> exit_err msg)
-  | Error msg -> exit_err msg
+  let id = Card.generate_id content in
+  let exists = Option.is_some @@ Store.find_card id store in
+  if exists then (
+    Fmt.pr "This name already exists. Press any key to edit the card...@.";
+    Caml.(input_char Caml.stdin) |> ignore;
+    add (Some content))
+  else
+    match Card.create id content with
+    | Ok card -> (
+        try
+          let updated_store = Store.add card store in
+          Store.save updated_store;
+          Fmt.pr "Card added (id: %s)\n" card.id
+        with Failure msg -> exit_err msg )
+    | Error msg -> exit_err msg
 
 
 
@@ -45,14 +48,14 @@ let print_cards cards =
   let open Card in 
   if List.length cards > 0 then
     List.iter cards ~f:(fun card ->
-        Fmt.pr "* %a %s\n" Console.yellow_s card.id @@ title card)
+        Fmt.pr "* %s\n"  @@ title card)
   else Fmt.pr "No card.\n"
 
 
 let list_boxes () =
   let store = Store.load () in
   List.iter store.boxes ~f:(fun {interval; cards} ->
-      Fmt.pr "Every %s\n" (Interval.to_string interval);
+      Fmt.pr "Every %a\n"  Console.green_s (Interval.to_string interval);
       print_cards cards
     )
 
@@ -66,30 +69,43 @@ let edit card_id =
   let store = Store.load () in
   let box_id, card = Store.find_card_or_exit card_id store in
   let new_content = Editor.edit (card.content ^ Editor.default_template) in
+  let new_id = Card.generate_id new_content in
+  let new_card = 
+    {card with content = new_content; 
+               id = new_id}
+  in
   Store.save
     {
       boxes =
         List.mapi store.boxes ~f:(fun i box ->
             if i = box_id then
-              let new_card = {card with content = new_content} in
               Box.set card_id new_card box
             else box);
     };
-  Fmt.pr "Edited card %a %s\n" Console.yellow_s card_id @@ Card.title card
+  if (String.(new_id = card_id)) then
+    Fmt.pr "Edited card %a@." Console.yellow_s @@ new_card.id
+  else
+    Fmt.pr "Edited card %a (new name %a)@." Console.yellow_s card_id Console.green_s @@ new_card.id
 
 
 let remove card_id =
   let store = Store.load () in
   let box_id, card = Store.find_card_or_exit card_id store in
-  let sp : Store.t =
-    {
-      boxes =
-        List.mapi store.boxes ~f:(fun i box ->
-            if i = box_id then Box.remove card.id box else box);
-    }
-  in
-  Store.save sp;
-  Fmt.pr "Card removed\n"
+  Fmt.pr "You are about to remove card %a, continue? [y/N]: %!" Console.magenta_s
+  @@ Card.title card;
+  match Stdio.(In_channel.input_char stdin) with
+  | Some c when Char.(c = 'y' || c = 'Y') ->
+      let sp : Store.t =
+        {
+          boxes =
+            List.mapi store.boxes ~f:(fun i box ->
+                if i = box_id then Box.remove card.id box else box);
+        }
+      in
+      Store.save sp;
+      Fmt.pr "Card removed.@."
+  | _ -> Fmt.pr "Aborted!@."
+ 
 
 
 let move_card card_id box_id =

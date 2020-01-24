@@ -4,15 +4,18 @@ type t = {
   last_reviewed_at: float
 } [@@deriving show, yojson]
 
-val create: string -> string -> (t, string) result
+module Id : sig
+  type t = string
+  val generate : (t -> bool) -> t
+end
+
+val generate_id: string -> string
+
+val create: string ->  string -> (t, string) result
+(** [create id content] creates a new card with an [id] a [name] and a [content] *)
 
 val title: t -> string
 
-module Id : sig
-  type t = string
-
-  val generate : (t -> bool) -> t
-end
 
 module Rating : sig
   type t = Bad | Again | Good | Easy
