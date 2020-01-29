@@ -45,10 +45,17 @@ let add_box interval =
 
 
 let print_cards cards =
-  let open Card in 
+  let open Card in
+  let open ISO8601.Permissive in
+  let open Fmt in
+  let grey = styled `Faint string in
+  let pp_last_reviewed ppf date =
+    pf ppf "%a %a %a" grey "(last reviewed on" pp_date date grey ")"
+  in
   if List.length cards > 0 then
     List.iter cards ~f:(fun card ->
-        Fmt.pr "* %s\n"  @@ title card)
+        pr "* %a %a@." Console.yellow_s (title card) pp_last_reviewed
+          card.last_reviewed_at)
   else Fmt.pr "No card.\n"
 
 

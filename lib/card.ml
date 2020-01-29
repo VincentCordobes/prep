@@ -1,6 +1,7 @@
 type t = {
   id: string; [@printer fun fmt -> fprintf fmt "%s"]
   content: string;
+  (* TODO: be less precise, maybe juste the day? *)
   last_reviewed_at: float;
 } [@@deriving show, yojson]
 

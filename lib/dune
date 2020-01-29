@@ -10,5 +10,6 @@
              fmt.tty
              cmdliner
              yojson
+             ISO8601
              ppx_deriving_yojson.runtime)
   (preprocess (pps ppx_deriving.show ppx_deriving_yojson)))

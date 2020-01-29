@@ -16,7 +16,6 @@ val create: string ->  string -> (t, string) result
 
 val title: t -> string
 
-
 module Rating : sig
   type t = Bad | Again | Good | Easy
   [@@deriving show]
