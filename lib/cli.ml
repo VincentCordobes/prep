@@ -240,9 +240,10 @@ let review (now) =
   let should_review (interval : Interval.t) (card : Card.t) =
     Float.(
       let interval =
+        let day_to_second n = of_int n * 24.0 * 60.0 * 60.0 in
         match interval with
-        | Day n -> of_int n * 24.0 * 60.0
-        | Week n -> of_int n * 7.0 * 24.0 * 60.0
+        | Day n -> day_to_second n 
+        | Week n -> day_to_second n * 7.0
       in
       (card.last_reviewed_at + interval) <= now)
   in
