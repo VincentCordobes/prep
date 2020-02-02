@@ -16,7 +16,7 @@ let rec add content =
   let id = Card.generate_id content in
   let exists = Option.is_some @@ Store.find_card id store in
   if exists then (
-    Fmt.pr "This name already exists. Press any key to edit the card...@.";
+    Fmt.pr "This name already exists. Press any key to continue...@.";
     Caml.(input_char Caml.stdin) |> ignore;
     add (Some content))
   else
@@ -50,7 +50,7 @@ let print_cards cards =
   let open Fmt in
   let grey = styled `Faint string in
   let pp_last_reviewed ppf date =
-    pf ppf "%a %a %a" grey "(last reviewed on" pp_date date grey ")"
+    pf ppf "%a %a%a" grey "(last reviewed on" pp_date date grey ")"
   in
   if List.length cards > 0 then
     List.iter cards ~f:(fun card ->

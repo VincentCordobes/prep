@@ -72,21 +72,25 @@ let exists card_id store =
 
 let move_card_to to_box card_id store =
   let boxes_count = List.length store.boxes in
-  if to_box < 0 || to_box >= boxes_count then store
-  else
-    let from_box, card = find_card_or_exit card_id store in
-    let boxes =
-      List.mapi store.boxes ~f:(fun i box ->
-          let box = 
+  let from_box, card = find_card_or_exit card_id store in
+  let to_box = 
+    if to_box < 0 then 0 
+    else if to_box >= boxes_count then 
+      (boxes_count - 1) 
+    else to_box 
+  in
+  let boxes =
+    List.mapi store.boxes ~f:(fun i box ->
+        let box = 
           if i = from_box then Box.remove card_id box
           else box in
 
-          if i = to_box then
-            Box.add {card with last_reviewed_at = Unix.time ()} box
-          else box
-        )
-    in
-    {boxes}
+        if i = to_box then
+          Box.add {card with last_reviewed_at = Unix.time ()} box
+        else box
+      )
+  in
+  {boxes}
 
 
 let empty_store () =
