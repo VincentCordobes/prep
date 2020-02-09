@@ -6,10 +6,13 @@ let exit_err msg =
   Console.print_error "%s" msg;
   Caml.exit 1
 
-let rec add content =
+let rec add ?(retry = false) content  =
   let content =
     match content with
-    | Some s -> Editor.edit (s ^ Editor.default_template)
+    | Some s -> 
+      if retry then
+        Editor.edit (s ^ Editor.default_template)
+      else s
     | None -> Editor.edit Editor.default_template
   in
   let store = Store.load () in
@@ -18,7 +21,7 @@ let rec add content =
   if exists then (
     Fmt.pr "This name already exists. Press any key to continue...@.";
     Caml.(input_char Caml.stdin) |> ignore;
-    add (Some content))
+    add (Some content) ~retry:true)
   else
     match Card.create id content with
     | Ok card -> (
@@ -137,7 +140,7 @@ let content_arg =
   )
 
 let add_cmd = 
-  Term.(const add $ content_arg), Term.info "add" ~exits:Term.default_exits
+  Term.(const (add ~retry:false) $ content_arg), Term.info "add" ~exits:Term.default_exits
 
 
 let add_box_cmd =

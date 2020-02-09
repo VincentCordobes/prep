@@ -1,10 +1,10 @@
-(executable
-  (name test)
-  (libraries alcotest
-             prep))
+(library
+ (name test)
+ (libraries prep)
+ (inline_tests (flags (-allow-output-patterns)))
+ (preprocess (pps ppx_expect)))
+ 
+(env 
+ (_ (env-vars 
+     (STORE_PATH "./.tmp"))))
 
-(alias
-  (name  runtest)
-  (package prep)
-  (deps (:exe test.exe))
-  (action (run %{exe} --color=always))) 

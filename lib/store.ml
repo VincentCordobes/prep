@@ -5,11 +5,13 @@ type t = {boxes: Box.t list}
 [@@deriving show, yojson {exn = true}]
 
 
-let app_dir = ".config/prep"
-let store_name = "store.json"
-
-let home = Sys.getenv "HOME"
-let store_path = Fmt.str "%s/%s/%s" home app_dir store_name
+let store_path = 
+  try Sys.getenv "STORE_PATH" with
+  | Not_found -> 
+    let app_dir = ".config/prep" in
+    let store_name = "store.json" in
+    let home = Sys.getenv "HOME" in
+    Fmt.str "%s/%s/%s" home app_dir store_name
 
 let load () = 
   let json_value = Yojson.Safe.from_file store_path in
@@ -107,7 +109,7 @@ let default_store () =
 let init () =
   if Sys.file_exists store_path then ()
   else
-    let app_dir = home ^ "/" ^ app_dir in
-    if not (Sys.file_exists app_dir) then 
-      Util.mkdir_p app_dir 0o777;
-    default_store () |> save
+    begin
+      Util.mkdir_p (Filename.dirname store_path) 0o777;
+      default_store () |> save
+    end
