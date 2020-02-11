@@ -1,8 +1,23 @@
 open Prep
 
 
-let%expect_test _ =
-  (* Should list empty default boxes *)
+let drop_store () =
+  let store_path = 
+    try Sys.getenv "STORE_PATH" with
+    | Not_found -> "" in
+  if store_path <> "" && Sys.file_exists store_path then
+    begin
+      Fmt.pr "Removing existing store";
+      Sys.remove store_path
+    end
+
+
+let before_all () = drop_store()
+
+let () = before_all ()
+
+
+let%expect_test "List empty default boxes" =
   Store.init ();
   Cli.list_boxes ();
   [%expect{|
@@ -14,10 +29,13 @@ let%expect_test _ =
     No card.
     Every 6 weeks
     No card.
-  |}];
+  |}]
 
-  (* Add a card *)
-  Cli.add @@ Some "Blink182 - All the small things";
+
+let%expect_test "Add and rate a card" =
+  Cli.add @@ Some {|Blink182 - All the small things
+
+body|};
   [%expect {|Card added (id: blink182_-_all_the_small_things)|}];
 
   let expect_some_boxes_with_one_card () =
@@ -89,3 +107,40 @@ let%expect_test _ =
     Every 6 weeks
     \* Blink182 - All the small things (last reviewed on .*) (regexp)
   |}];
+
+
+  Cli.show_card "blink182_-_all_the_small_things";
+  [%expect {|
+    Blink182 - All the small things 
+
+    body
+  |}];
+
+
+  (* Add a box *)
+  Cli.add_box (Interval.Day 400) |> ignore;
+  [%expect {| Box added (repetitions every 400 days) |}];
+
+  (* Handle duplicate boxes *)
+  Cli.add_box (Interval.Day 400) |> ignore;
+  [%expect {| Error: A box with interval 400 days already exists |}];
+
+  Cli.list_boxes ();
+  [%expect{|
+    Every 3 days
+    No card.
+    Every 1 week
+    No card.
+    Every 8 days
+    No card.
+    Every 6 weeks
+    \* Blink182 - All the small things (last reviewed on .*) (regexp)
+    Every 400 days
+    No card.
+  |}];
+
+  (* (* Should not accept duplicate *) *)
+  (* Cli.add @@ Some "Blink182 - All the small things"; *)
+  (* [%expect{| *)
+  (*   This name already exists. Press any key to continue... *)
+  (* |}]; *)

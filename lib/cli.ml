@@ -33,6 +33,8 @@ let rec add ?(retry = false) content  =
     | Error msg -> exit_err msg
 
 
+  
+
 
 let add_box interval =
   let store = Store.load () in
@@ -40,11 +42,17 @@ let add_box interval =
     List.exists store.boxes ~f:(fun box ->
         Interval.compare box.interval interval = 0)
   in
-  if box_exists then (
-    Console.(print_error "A box with interval %a already exists" green_s)
-    @@ Interval.to_string interval;
-    Caml.exit 1)
-  else Store.save (Store.add_box {interval; cards = []} store)
+  if box_exists then
+    begin
+      Console.(print_error "A box with interval %a already exists" green_s)
+      @@ Interval.to_string interval;
+    end
+  else
+    begin
+      Store.save (Store.add_box {interval; cards = []} store);
+      Fmt.pr "Box added (repetitions every %a)" Console.green_s
+        (Interval.to_string interval);
+    end
 
 
 let print_cards cards =
@@ -139,8 +147,12 @@ let content_arg =
     |> value
   )
 
-let add_cmd = 
-  Term.(const (add ~retry:false) $ content_arg), Term.info "add" ~exits:Term.default_exits
+
+let add_cmd =
+  let action = Term.(const (add ~retry:false) $ content_arg) in
+  let info = Term.info "add" ~exits:Term.default_exits in
+  (action, info)
+
 
 
 let add_box_cmd =
@@ -155,7 +167,9 @@ let add_box_cmd =
       |> opt (some interval) None
       |> required)
   in
-  (Term.(const add_box $ interval_arg), Term.info "add-box")
+  let action = Term.(const add_box $ interval_arg)  in
+  let info = Term.info "add-box" in
+  (action, info)
 
 
 
