@@ -83,10 +83,10 @@ let show_card id =
   Fmt.pr "%s\n" card.content
 
 
-let edit card_id =
+let edit open_in_editor card_id =
   let store = Store.load () in
   let box_id, card = Store.find_card_or_exit card_id store in
-  let new_content = Editor.edit (card.content ^ Editor.default_template) in
+  let new_content = open_in_editor (card.content ^ Editor.default_template) in
   let new_id = Card.generate_id new_content in
   let new_card = 
     {card with content = new_content; 
@@ -106,12 +106,12 @@ let edit card_id =
     Fmt.pr "Edited card %a (new name %a)@." Console.yellow_s card_id Console.green_s @@ new_card.id
 
 
-let remove card_id =
+let remove input_char card_id =
   let store = Store.load () in
   let box_id, card = Store.find_card_or_exit card_id store in
-  Fmt.pr "You are about to remove card %a, continue? [y/N]: %!" Console.magenta_s
+  Fmt.pr "You are about to remove the card %a, continue? [y/N]: %!" Console.magenta_s
   @@ Card.title card;
-  match Stdio.(In_channel.input_char stdin) with
+  match input_char () with
   | Some c when Char.(c = 'y' || c = 'Y') ->
       let sp : Store.t =
         {
@@ -121,7 +121,7 @@ let remove card_id =
         }
       in
       Store.save sp;
-      Fmt.pr "Card removed.@."
+      Fmt.pr "Card removed."
   | _ -> Fmt.pr "Aborted!@."
  
 
@@ -189,10 +189,14 @@ let show_card_cmd =
   Term.(const show_card $ card_id_arg), Term.info "show"
 
 
-let edit_cmd = Term.(const edit $ card_id_arg), Term.info "edit"
+let edit_cmd = Term.(const (edit Editor.edit) $ card_id_arg), Term.info "edit"
 
 
-let remove_cmd = Term.(const remove $ card_id_arg), Term.info "remove"
+let remove_cmd =
+  let input_char () = Stdio.(In_channel.input_char Caml.stdin) in
+  let action = Term.(const (remove input_char) $ card_id_arg) in
+  let info = Term.info "remove" in
+  (action, info)
 
 
 let move_card_cmd =

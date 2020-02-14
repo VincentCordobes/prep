@@ -139,6 +139,68 @@ body|};
     No card.
   |}];
 
+
+  (* Edit a card *)
+  Cli.edit (fun _ -> "yo") "blink182_-_all_the_small_things";
+  [%expect {| Edited card blink182_-_all_the_small_things (new name yo) |}];
+
+  Cli.list_boxes ();
+  [%expect{|
+    Every 3 days
+    No card.
+    Every 1 week
+    No card.
+    Every 8 days
+    No card.
+    Every 6 weeks
+    \* yo (last reviewed on .*) (regexp)
+    Every 400 days
+    No card.
+  |}];
+
+
+  (* Remove a card confirmation *)
+  Cli.remove (fun _ -> Some 'n') "yo";
+  [%expect{|
+    You are about to remove the card yo, continue? [y/N]: Aborted!
+  |}];
+
+  Cli.list_boxes ();
+  [%expect{|
+    Every 3 days
+    No card.
+    Every 1 week
+    No card.
+    Every 8 days
+    No card.
+    Every 6 weeks
+    \* yo (last reviewed on .*) (regexp)
+    Every 400 days
+    No card.
+  |}];
+
+  (* Remove a card *)
+  Cli.remove (fun _ -> Some 'y') "yo";
+  [%expect{|
+    You are about to remove the card yo, continue? [y/N]: Card removed.
+  |}];
+
+  Cli.list_boxes ();
+  [%expect{|
+    Every 3 days
+    No card.
+    Every 1 week
+    No card.
+    Every 8 days
+    No card.
+    Every 6 weeks
+    No card.
+    Every 400 days
+    No card.
+  |}];
+
+
+
   (* (* Should not accept duplicate *) *)
   (* Cli.add @@ Some "Blink182 - All the small things"; *)
   (* [%expect{| *)
