@@ -45,16 +45,35 @@ let all_cards store =
   List.bind store.boxes ~f:(fun box -> box.cards)
 
 let find_card card_id store =
-  let box_cards =  
-    List.foldi
-      store.boxes
-      ~init:(Hashtbl.Poly.create ()) 
-      ~f:(fun i table box -> 
-          List.iter box.cards ~f:(fun card -> 
-              Hashtbl.add table ~key:card.id ~data:(i, card) |> ignore
-            ) ;
-          table) in
-  Hashtbl.find box_cards card_id
+  let is_equal a b =
+    Str.string_partial_match
+      (Str.regexp (String.lowercase_ascii a))
+      (String.lowercase_ascii b) 0
+  in
+  let matches =
+    List.foldi store.boxes ~init:[] ~f:(fun i acc box ->
+        let matches =
+          List.filter box.cards ~f:(fun card -> is_equal card_id card.id)
+          |> List.map ~f:(fun card -> (i, card))
+        in
+        acc @ matches)
+  in
+  match matches with [] -> None | [x] -> Some x | _ -> None
+
+
+
+
+
+  (* let box_cards =   *)
+  (*   List.foldi *)
+  (*     store.boxes *)
+  (*     ~init:(Hashtbl.Poly.create ())  *)
+  (*     ~f:(fun i table box ->  *)
+  (*         List.iter box.cards ~f:(fun card ->  *)
+  (*             Hashtbl.add table ~key:card.id ~data:(i, card) |> ignore *)
+  (*           ) ; *)
+  (*         table) in *)
+  (* Hashtbl.find box_cards card_id *)
 
 
 let find_card_or_exit card_id store =

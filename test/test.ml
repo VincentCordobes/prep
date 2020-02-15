@@ -109,7 +109,24 @@ body|};
   |}];
 
 
+  (* Show a card *)
   Cli.show_card "blink182_-_all_the_small_things";
+  [%expect {|
+    Blink182 - All the small things 
+
+    body
+  |}];
+
+  (* Partial match *)
+  Cli.show_card "bliNk182";
+  [%expect {|
+    Blink182 - All the small things 
+
+    body
+  |}];
+
+  (* Partial match *)
+  Cli.show_card "blink182_-_all_the_small_thingss";
   [%expect {|
     Blink182 - All the small things 
 
@@ -198,6 +215,8 @@ body|};
     Every 400 days
     No card.
   |}];
+
+
 
 
 
