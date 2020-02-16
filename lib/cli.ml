@@ -97,13 +97,13 @@ let edit open_in_editor card_id =
       boxes =
         List.mapi store.boxes ~f:(fun i box ->
             if i = box_id then
-              Box.set card_id new_card box
+              Box.set card.id new_card box
             else box);
     };
-  if (String.(new_id = card_id)) then
+  if (String.(new_id = card.id)) then
     Fmt.pr "Edited card %a@." Console.yellow_s @@ new_card.id
   else
-    Fmt.pr "Edited card %a (new name %a)@." Console.yellow_s card_id Console.green_s @@ new_card.id
+    Fmt.pr "Edited card %a (new name %a)@." Console.yellow_s card.id Console.green_s @@ new_card.id
 
 
 let remove input_char card_id =

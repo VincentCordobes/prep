@@ -157,8 +157,13 @@ body|};
   |}];
 
 
-  (* Edit a card *)
-  Cli.edit (fun _ -> "yo") "blink182_-_all_the_small_things";
+  (* Edit card content *)
+  let open_in_editor _  = 
+    {|yo
+
+new body|} 
+  in
+  Cli.edit open_in_editor "blink";
   [%expect {| Edited card blink182_-_all_the_small_things (new name yo) |}];
 
   Cli.list_boxes ();
@@ -174,6 +179,14 @@ body|};
     Every 400 days
     No card.
   |}];
+
+  Cli.show_card "yo";
+  [%expect {|
+    yo 
+
+    new body
+  |}];
+
 
 
   (* Remove a card confirmation *)
