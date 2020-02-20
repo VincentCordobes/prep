@@ -2,10 +2,6 @@ open Base
 open Cmdliner
 
 
-let exit_err msg =
-  Console.print_error "%s" msg;
-  Caml.exit 1
-
 let rec add ?(retry = false) content  =
   let content =
     match content with
@@ -25,12 +21,11 @@ let rec add ?(retry = false) content  =
   else
     match Card.create id content with
     | Ok card -> (
-        try
           let updated_store = Store.add card store in
           Store.save updated_store;
-          Fmt.pr "Card added (id: %s)\n" card.id
-        with Failure msg -> exit_err msg )
-    | Error msg -> exit_err msg
+          Fmt.pr "Card added (id: %s)\n" card.id)
+    | Error msg -> failwith msg
+
 
 
   
@@ -79,13 +74,13 @@ let list_boxes () =
 
 let show_card id =
   let store = Store.load () in
-  let _, card = Store.find_card_or_exit id store in
+  let _, card = Store.find_card_exn id store in
   Fmt.pr "%s\n" card.content
 
 
 let edit open_in_editor card_id =
   let store = Store.load () in
-  let box_id, card = Store.find_card_or_exit card_id store in
+  let box_id, card = Store.find_card_exn card_id store in
   let new_content = open_in_editor (card.content ^ Editor.default_template) in
   let new_id = Card.generate_id new_content in
   let new_card = 
@@ -108,7 +103,7 @@ let edit open_in_editor card_id =
 
 let remove input_char card_id =
   let store = Store.load () in
-  let box_id, card = Store.find_card_or_exit card_id store in
+  let box_id, card = Store.find_card_exn card_id store in
   Fmt.pr "You are about to remove the card %a, continue? [y/N]: %!" Console.magenta_s
   @@ Card.title card;
   match input_char () with
@@ -135,7 +130,7 @@ let move_card card_id box_id =
 
 let move_down card_id =
   let store = Store.load () in
-  let box_id, _ = Store.find_card_or_exit card_id store in
+  let box_id, _ = Store.find_card_exn card_id store in
   Store.move_card_to (box_id - 1) card_id store
   |> Store.save
 
@@ -217,7 +212,7 @@ let move_down_cmd =
 let rate (rating: Card.Rating.t) card_id =
   let open Card.Rating in
   let store = Store.load () in
-  let box_id, _ = Store.find_card_or_exit card_id store in
+  let box_id, _ = Store.find_card_exn card_id store in
   (match rating with
    | Bad -> 
      store 
@@ -242,6 +237,7 @@ let rate (rating: Card.Rating.t) card_id =
   Fmt.pr "Card rated %a\n" Console.magenta_s
   @@ String.lowercase
   @@ Card.Rating.to_string rating
+
 
 let rate_cmd =
   let rating = 

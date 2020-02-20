@@ -75,13 +75,14 @@ let find_card card_id store =
   (*         table) in *)
   (* Hashtbl.find box_cards card_id *)
 
+exception Business_error
 
-let find_card_or_exit card_id store =
+let find_card_exn card_id store =
   match find_card card_id store with
   | Some result -> result
   | None ->
-      Console.(print_error "No card found with id %a\n" yellow_s card_id);
-      Caml.exit 1
+    Console.(print_error "No card found with id %a" yellow_s card_id);
+    raise Caml.Not_found
 
 
 let exists card_id store =
@@ -93,7 +94,7 @@ let exists card_id store =
 
 let move_card_to to_box card_id store =
   let boxes_count = List.length store.boxes in
-  let from_box, card = find_card_or_exit card_id store in
+  let from_box, card = find_card_exn card_id store in
   let to_box = 
     if to_box < 0 then 0 
     else if to_box >= boxes_count then 

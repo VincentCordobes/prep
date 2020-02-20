@@ -110,6 +110,11 @@ body|};
 
 
   (* Show a card *)
+  try Cli.show_card "azerty" with _ -> ();
+  [%expect {|
+    Error: No card found with id azerty
+  |}];
+
   Cli.show_card "blink182_-_all_the_small_things";
   [%expect {|
     Blink182 - All the small things 
