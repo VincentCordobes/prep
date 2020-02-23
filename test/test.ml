@@ -110,7 +110,7 @@ body|};
 
 
   (* Show a card *)
-  try Cli.show_card "azerty" with _ -> ();
+  (try Cli.show_card "azerty" with _ -> ());
   [%expect {|
     Error: No card found with id azerty
   |}];
@@ -136,6 +136,27 @@ body|};
     Blink182 - All the small things 
 
     body
+  |}];
+
+  (* Exact match *)
+  Cli.add @@ Some {|blink|};
+  [%expect {| Card added (id: blink) |}];
+
+  Cli.show_card "blink";
+  [%expect {| blink |}];
+
+  (* Ambigous match *)
+  (try Cli.show_card "bli" with _ -> ());
+  [%expect {| 
+    Error: Several cards matches id bli.
+
+    The most similar cards are
+      * blink182_-_all_the_small_things
+      * blink
+  |}];
+  Cli.remove (fun _ -> Some 'y') "blink";
+  [%expect{|
+    You are about to remove the card blink, continue? [y/N]: Card removed.
   |}];
 
 
@@ -234,12 +255,3 @@ new body|}
     No card.
   |}];
 
-
-
-
-
-  (* (* Should not accept duplicate *) *)
-  (* Cli.add @@ Some "Blink182 - All the small things"; *)
-  (* [%expect{| *)
-  (*   This name already exists. Press any key to continue... *)
-  (* |}]; *)

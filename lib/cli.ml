@@ -13,7 +13,7 @@ let rec add ?(retry = false) content  =
   in
   let store = Store.load () in
   let id = Card.generate_id content in
-  let exists = Option.is_some @@ Store.find_card id store in
+  let exists = Store.exists ~exact:true id store in
   if exists then (
     Fmt.pr "This name already exists. Press any key to continue...@.";
     Caml.(input_char Caml.stdin) |> ignore;

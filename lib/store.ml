@@ -42,40 +42,58 @@ let add card ?(at = 0) store =
   {boxes}
 
 let all_cards store =
-  List.bind store.boxes ~f:(fun box -> box.cards)
+  List.concat_mapi store.boxes ~f:(fun i box ->
+      box.cards |> List.map ~f:(fun card -> (i, card)))
 
-let find_card card_id store =
-  let is_equal a b =
+type find_card_error =
+  | Card_not_found
+  | Ambigous_card_id of Card.t list
+
+let find_card ?(exact = false) card_id store =
+  let partial_match a b =
     Str.string_partial_match
       (Str.regexp (String.lowercase_ascii a))
       (String.lowercase_ascii b) 0
   in
-  let matches =
-    List.foldi store.boxes ~init:[] ~f:(fun i acc box ->
-        let matches =
-          List.filter box.cards ~f:(fun card -> is_equal card_id card.id)
-          |> List.map ~f:(fun card -> (i, card))
-        in
-        acc @ matches)
+  let rec get_matches acc = function
+    | [] -> acc
+    | (box_id, card) :: tail ->
+        if card_id = Card.(card.id) then [(box_id, card)]
+        else if (not exact) && partial_match card_id card.id then
+          get_matches ((box_id, card) :: acc) tail
+        else get_matches acc tail
   in
-  match matches with [] -> None | [x] -> Some x | _ -> None
+  let matches = get_matches [] (all_cards store) in
+  match matches with
+  | [] -> Error Card_not_found
+  | [x] -> Ok x
+  | all_matches ->
+      let cards = List.map all_matches ~f:(fun (_, card) -> card) in
+      Error (Ambigous_card_id cards)
 
 
-exception Business_error
+exception Card_not_found
+exception Ambiguous_search of Card.t list
 
-let find_card_exn card_id store =
-  match find_card card_id store with
-  | Some result -> result
-  | None ->
+let find_card_exn ?(exact=false) card_id store =
+  match find_card ~exact card_id store with
+  | Ok result -> result
+  | Error Card_not_found ->
     Console.(print_error "No card found with id %a" yellow_s card_id);
-    raise Caml.Not_found
+    raise Card_not_found
+  | Error (Ambigous_card_id cards) ->
+    Console.(print_error "Several cards matches id %a.\n" cyan_s card_id);
+    Fmt.(pf stderr "The most similar cards are\n");
+    List.iter cards ~f:(fun card ->
+        Fmt.(pf stderr "  * %a\n" Console.yellow_s card.id));
+    raise (Ambiguous_search cards)
 
 
-let exists card_id store =
-  let result = find_card card_id store in
+let exists ?(exact=false) card_id store =
+  let result = find_card ~exact card_id store in
   match result with
-  | Some _ -> true
-  | None -> false
+  | Ok _ -> true
+  | Error _ -> false
 
 
 let move_card_to to_box card_id store =
