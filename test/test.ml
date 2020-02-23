@@ -62,7 +62,7 @@ body|};
   expect_some_boxes_with_one_card ();
 
   (* Should move the card a to the next box*)
-  Cli.rate Card.Rating.Good "blink182_-_all_the_small_things";
+  Cli.rate Card.Rating.Good "blink182";
   [%expect {| Card rated good |}];
   Cli.list_boxes ();
   [%expect{|

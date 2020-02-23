@@ -61,20 +61,6 @@ let find_card card_id store =
   match matches with [] -> None | [x] -> Some x | _ -> None
 
 
-
-
-
-  (* let box_cards =   *)
-  (*   List.foldi *)
-  (*     store.boxes *)
-  (*     ~init:(Hashtbl.Poly.create ())  *)
-  (*     ~f:(fun i table box ->  *)
-  (*         List.iter box.cards ~f:(fun card ->  *)
-  (*             Hashtbl.add table ~key:card.id ~data:(i, card) |> ignore *)
-  (*           ) ; *)
-  (*         table) in *)
-  (* Hashtbl.find box_cards card_id *)
-
 exception Business_error
 
 let find_card_exn card_id store =
@@ -104,7 +90,7 @@ let move_card_to to_box card_id store =
   let boxes =
     List.mapi store.boxes ~f:(fun i box ->
         let box = 
-          if i = from_box then Box.remove card_id box
+          if i = from_box then Box.remove card.id box
           else box in
 
         if i = to_box then
