@@ -19,11 +19,11 @@ module Id = struct
     | false -> id
 end
 
-let create id content =
+let create id content last_reviewed_at =
   if content = "" then
     Error "content cannot be empty"
   else
-    Ok {id; content; last_reviewed_at = Unix.time ()}
+    Ok {id; content; last_reviewed_at}
 
 
 let generate_id content =

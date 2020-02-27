@@ -11,7 +11,7 @@ end
 
 val generate_id: string -> string
 
-val create: string ->  string -> (t, string) result
+val create: string ->  string -> float -> (t, string) result
 (** [create id content] creates a new card with an [id] a [name] and a [content] *)
 
 val title: t -> string

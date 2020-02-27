@@ -2,7 +2,7 @@ open Base
 open Cmdliner
 
 
-let rec add ?(retry = false) content  =
+let rec add ?(last_reviewed_at = Unix.time ()) ?(retry = false) content  =
   let content =
     match content with
     | Some s -> 
@@ -19,7 +19,7 @@ let rec add ?(retry = false) content  =
     Caml.(input_char Caml.stdin) |> ignore;
     add (Some content) ~retry:true)
   else
-    match Card.create id content with
+    match Card.create id content last_reviewed_at with
     | Ok card -> (
           let updated_store = Store.add card store in
           Store.save updated_store;
@@ -27,8 +27,6 @@ let rec add ?(retry = false) content  =
     | Error msg -> failwith msg
 
 
-
-  
 
 
 let add_box interval =
@@ -50,18 +48,35 @@ let add_box interval =
     end
 
 
-let print_cards cards =
+let next_review (interval: Interval.t) (card: Card.t) = 
+  Float.(
+    let interval =
+      let day_to_second n = of_int n * 24.0 * 60.0 * 60.0 in
+      match interval with
+      | Day n -> day_to_second n 
+      | Week n -> day_to_second n * 7.0
+    in
+    card.last_reviewed_at + interval)
+
+
+let print_cards ?interval cards =
   let open Card in
   let open ISO8601.Permissive in
   let open Fmt in
   let grey = styled `Faint string in
-  let pp_last_reviewed ppf date =
-    pf ppf "%a %a%a" grey "(last reviewed on" pp_date date grey ")"
+
+  let pp_content ppf card =
+    match interval with
+    | None -> pf ppf "%a %a" grey "last" pp_date card.last_reviewed_at
+    | Some interval -> pf ppf "%a %a%a %a" grey "last" pp_date card.last_reviewed_at grey ", next"
+      pp_date (next_review interval card)
+  in
+  let pp_last_reviewed ppf card =
+    pf ppf "%a%a%a" grey "(" pp_content card grey ")"
   in
   if List.length cards > 0 then
     List.iter cards ~f:(fun card ->
-        pr "* %a %a@." Console.yellow_s (title card) pp_last_reviewed
-          card.last_reviewed_at)
+        pr "* %a %a@." Console.yellow_s (title card) pp_last_reviewed card)
   else Fmt.pr "No card.\n"
 
 
@@ -69,7 +84,7 @@ let list_boxes () =
   let store = Store.load () in
   List.iter store.boxes ~f:(fun {interval; cards} ->
       Fmt.pr "Every %a\n"  Console.green_s (Interval.to_string interval);
-      print_cards cards
+      print_cards ~interval cards
     )
 
 let show_card id =
@@ -144,10 +159,10 @@ let content_arg =
 
 
 let add_cmd =
-  let action = Term.(const (add ~retry:false) $ content_arg) in
+  let now = Unix.time () in
+  let action = Term.(const (add ~last_reviewed_at:now ~retry:false) $ content_arg) in
   let info = Term.info "add" ~exits:Term.default_exits in
   (action, info)
-
 
 
 let add_box_cmd =
@@ -260,21 +275,16 @@ let rate_cmd =
   (action , info)
 
 
+
 let review (now) =
+  let open Box in
   let should_review (interval : Interval.t) (card : Card.t) =
-    Float.(
-      let interval =
-        let day_to_second n = of_int n * 24.0 * 60.0 * 60.0 in
-        match interval with
-        | Day n -> day_to_second n 
-        | Week n -> day_to_second n * 7.0
-      in
-      (card.last_reviewed_at + interval) <= now)
+    Float.((next_review interval card) <= now)
   in
   let store = Store.load () in
-  List.bind store.boxes ~f:(fun box ->
+  List.bind store.boxes ~f:(fun (box: Box.t) ->
       List.filter box.cards ~f:(should_review box.interval))
-  |> print_cards
+  |> print_cards 
 
 
 let review_cmd =

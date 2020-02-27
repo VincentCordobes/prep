@@ -16,6 +16,7 @@ let before_all () = drop_store()
 
 let () = before_all ()
 
+let now = 1582818998.889
 
 let%expect_test "List empty default boxes" =
   Store.init ();
@@ -42,7 +43,7 @@ body|};
     Cli.list_boxes ();
     [%expect{|
       Every 3 days
-      \* Blink182 - All the small things (last reviewed on .*) (regexp)
+      \* Blink182 - All the small things (.*) (regexp)
       Every 1 week
       No card.
       Every 8 days
@@ -69,7 +70,7 @@ body|};
     Every 3 days
     No card.
     Every 1 week
-    \* Blink182 - All the small things (last reviewed on .*) (regexp)
+    \* Blink182 - All the small things (.*) (regexp)
     Every 8 days
     No card.
     Every 6 weeks
@@ -88,7 +89,7 @@ body|};
     Every 8 days
     No card.
     Every 6 weeks
-    \* Blink182 - All the small things (last reviewed on .*) (regexp)
+    \* Blink182 - All the small things (.*) (regexp)
   |}];
 
   (* Should not move the card *)
@@ -105,7 +106,7 @@ body|};
     Every 8 days
     No card.
     Every 6 weeks
-    \* Blink182 - All the small things (last reviewed on .*) (regexp)
+    \* Blink182 - All the small things (.*) (regexp)
   |}];
 
 
@@ -177,7 +178,7 @@ body|};
     Every 8 days
     No card.
     Every 6 weeks
-    \* Blink182 - All the small things (last reviewed on .*) (regexp)
+    \* Blink182 - All the small things (.*) (regexp)
     Every 400 days
     No card.
   |}];
@@ -201,7 +202,7 @@ new body|}
     Every 8 days
     No card.
     Every 6 weeks
-    \* yo (last reviewed on .*) (regexp)
+    \* yo (.*) (regexp)
     Every 400 days
     No card.
   |}];
@@ -230,7 +231,7 @@ new body|}
     Every 8 days
     No card.
     Every 6 weeks
-    \* yo (last reviewed on .*) (regexp)
+    \* yo (.*) (regexp)
     Every 400 days
     No card.
   |}];
@@ -253,5 +254,36 @@ new body|}
     No card.
     Every 400 days
     No card.
-  |}];
+  |}]
 
+
+
+
+let%expect_test "next review date" =
+  let add_card content =
+    Cli.add ~last_reviewed_at:now @@ Some content;
+    [%expect{| Card added (.*) (regexp)|}]
+  in
+
+  let rate_card_good card_id =
+    Cli.rate Card.Rating.Good card_id;
+    [%expect {| Card rated good |}]
+  in
+
+  add_card "song";
+  add_card "sing";
+  rate_card_good "sing";
+
+  Cli.list_boxes ();
+  [%expect{|
+    Every 3 days
+    * song (last 2020-02-27, next 2020-03-01)
+    Every 1 week
+    * sing (last 2020-02-27, next 2020-03-05)
+    Every 8 days
+    No card.
+    Every 6 weeks
+    No card.
+    Every 400 days
+    No card.
+  |}];
