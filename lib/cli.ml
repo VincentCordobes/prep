@@ -136,17 +136,17 @@ let remove input_char card_id =
  
 
 
-let move_card card_id box_id =
+let move_card ~at card_id box_id =
   let store = Store.load () in
-  Store.move_card_to (box_id - 1) card_id store
+  Store.move_card_to at (box_id - 1) card_id store
   |> Store.save
 
 
 
-let move_down card_id =
+let move_down ~at card_id =
   let store = Store.load () in
   let box_id, _ = Store.find_card_exn card_id store in
-  Store.move_card_to (box_id - 1) card_id store
+  Store.move_card_to at (box_id - 1) card_id store
   |> Store.save
 
 let content_arg =
@@ -210,43 +210,46 @@ let remove_cmd =
 
 
 let move_card_cmd =
+  let now = Unix.time () in
   let box_id_arg =
     Arg.(
       info [] ~docv:"BOX_ID" ~doc:"Id of the box"
       |> pos ~rev:true 0 (some int) None
       |> required
     ) in
-  (Term.(const move_card $ card_id_arg $ box_id_arg), Term.info "move")
+  (Term.(const (move_card ~at:now) $ card_id_arg $ box_id_arg), Term.info "move")
 
 
 
 let move_down_cmd =
-  Term.(const move_down $ card_id_arg), Term.info "move-down"
+  let now = Unix.time () in
+  Term.(const (move_down ~at:now) $ card_id_arg), Term.info "move-down"
 
 
-let rate (rating: Card.Rating.t) card_id =
+let rate ~at (rating: Card.Rating.t) card_id =
   let open Card.Rating in
   let store = Store.load () in
   let box_id, _ = Store.find_card_exn card_id store in
+  let move_card_to = Store.move_card_to at in
   (match rating with
    | Bad -> 
      store 
-     |> Store.move_card_to 0 card_id 
+     |> move_card_to 0 card_id 
      |> Store.save
 
    | Again -> 
      store
-     |> Store.move_card_to (box_id - 1) card_id
+     |> move_card_to (box_id - 1) card_id
      |> Store.save
 
    | Good -> 
      store
-     |> Store.move_card_to (box_id + 1) card_id
+     |> move_card_to (box_id + 1) card_id
      |> Store.save
 
    | Easy ->
      store
-     |> Store.move_card_to ((List.length store.boxes) - 1) card_id
+     |> move_card_to ((List.length store.boxes) - 1) card_id
      |> Store.save);
 
   Fmt.pr "Card rated %a\n" Console.magenta_s
@@ -270,7 +273,8 @@ let rate_cmd =
       |> pos 0 (some rating) None
       |> required)
   in
-  let action = Term.(const rate $ rating_arg $ card_id_arg ) in
+  let now = Unix.time () in
+  let action = Term.(const (rate ~at:now) $ rating_arg $ card_id_arg ) in
   let info = Term.info "rate" in
   (action , info)
 

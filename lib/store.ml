@@ -96,7 +96,7 @@ let exists ?(exact=false) card_id store =
   | Error _ -> false
 
 
-let move_card_to to_box card_id store =
+let move_card_to date to_box card_id store =
   let boxes_count = List.length store.boxes in
   let from_box, card = find_card_exn card_id store in
   let to_box = 
@@ -112,7 +112,7 @@ let move_card_to to_box card_id store =
           else box in
 
         if i = to_box then
-          Box.add {card with last_reviewed_at = Unix.time ()} box
+          Box.add {card with last_reviewed_at = date} box
         else box
       )
   in

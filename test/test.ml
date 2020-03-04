@@ -54,16 +54,16 @@ body|};
 
   (* Card Rating *)
   (* Should not move the card *)
-  Cli.rate Card.Rating.Bad "blink182_-_all_the_small_things";
+  Cli.rate ~at:now Card.Rating.Bad "blink182_-_all_the_small_things";
   [%expect {| Card rated bad |}];
   expect_some_boxes_with_one_card ();
 
-  Cli.rate Card.Rating.Again "blink182_-_all_the_small_things";
+  Cli.rate ~at:now Card.Rating.Again "blink182_-_all_the_small_things";
   [%expect {| Card rated again |}];
   expect_some_boxes_with_one_card ();
 
   (* Should move the card a to the next box*)
-  Cli.rate Card.Rating.Good "blink182";
+  Cli.rate ~at:now Card.Rating.Good "blink182";
   [%expect {| Card rated good |}];
   Cli.list_boxes ();
   [%expect{|
@@ -78,7 +78,7 @@ body|};
   |}];
 
   (* Should move the card at this end *)
-  Cli.rate Card.Rating.Easy "blink182_-_all_the_small_things";
+  Cli.rate ~at:now Card.Rating.Easy "blink182_-_all_the_small_things";
   [%expect {| Card rated easy |}];
   Cli.list_boxes ();
   [%expect{|
@@ -93,9 +93,9 @@ body|};
   |}];
 
   (* Should not move the card *)
-  Cli.rate Card.Rating.Easy "blink182_-_all_the_small_things";
+  Cli.rate ~at:now Card.Rating.Easy "blink182_-_all_the_small_things";
   [%expect {| Card rated easy |}];
-  Cli.rate Card.Rating.Good "blink182_-_all_the_small_things";
+  Cli.rate ~at:now Card.Rating.Good "blink182_-_all_the_small_things";
   [%expect {| Card rated good |}];
   Cli.list_boxes ();
   [%expect{|
@@ -257,8 +257,6 @@ new body|}
   |}]
 
 
-
-
 let%expect_test "next review date" =
   let add_card content =
     Cli.add ~last_reviewed_at:now @@ Some content;
@@ -266,7 +264,7 @@ let%expect_test "next review date" =
   in
 
   let rate_card_good card_id =
-    Cli.rate Card.Rating.Good card_id;
+    Cli.rate ~at:now Card.Rating.Good card_id;
     [%expect {| Card rated good |}]
   in
 
@@ -284,6 +282,36 @@ let%expect_test "next review date" =
     No card.
     Every 6 weeks
     No card.
+    Every 400 days
+    No card.
+  |}];
+
+  rate_card_good "sing";
+  Cli.list_boxes ();
+  [%expect{|
+    Every 3 days
+    * song (last 2020-02-27, next 2020-03-01)
+    Every 1 week
+    No card.
+    Every 8 days
+    * sing (last 2020-02-27, next 2020-03-06)
+    Every 6 weeks
+    No card.
+    Every 400 days
+    No card.
+  |}];
+
+  rate_card_good "sing";
+  Cli.list_boxes ();
+  [%expect{|
+    Every 3 days
+    * song (last 2020-02-27, next 2020-03-01)
+    Every 1 week
+    No card.
+    Every 8 days
+    No card.
+    Every 6 weeks
+    * sing (last 2020-02-27, next 2020-04-09)
     Every 400 days
     No card.
   |}];

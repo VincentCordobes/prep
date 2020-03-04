@@ -11,11 +11,11 @@ end
 
 val generate_id: string -> string
 
-val create: string ->  string -> float -> (t, string) result
-(** [create id content] creates a new card with an [id] a [name] and a [content] *)
+val create : string -> string -> float -> (t, string) result
+(** [create id content at] creates a new card with an [id] 
+    a [name] and a [content] [at] a the given time *)
 
 val title: t -> string
-
 
 module Rating : sig
   type t = Bad | Again | Good | Easy
