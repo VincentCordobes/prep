@@ -131,7 +131,7 @@ let remove input_char card_id =
         }
       in
       Store.save sp;
-      Fmt.pr "Card removed."
+      Fmt.pr "Card removed.@."
   | _ -> Fmt.pr "Aborted!@."
  
 
@@ -185,6 +185,19 @@ let add_box_cmd =
 
 let list_boxes_cmd =
   Term.(const list_boxes $ const ()), Term.info "list-boxes"
+
+
+let complete_ids () =
+  let store = Store.load() in
+  let cards = Store.all_cards(store) in
+  List.iter cards ~f:(fun (_,card) -> Fmt.pr "%s " Card.(card.id));
+  Fmt.pr("@.")
+
+
+let complete_ids_cmd =
+  let action = Term.(const complete_ids $ const ()) in
+  let info = Term.info "complete-ids" in
+  (action, info)
 
  
 let card_id_arg =

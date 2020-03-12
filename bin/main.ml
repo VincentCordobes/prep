@@ -17,6 +17,7 @@ let () =
     ~catch: false
       [
         list_boxes_cmd;
+        complete_ids_cmd;
         show_card_cmd;
         add_cmd;
         add_box_cmd;
