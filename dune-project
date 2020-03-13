@@ -2,6 +2,7 @@
 (name prep)
 (license MIT)
 (authors "Vincent Cordobes <vincent.cordobes@gmail.com>")
+(maintainers "Vincent Cordobes <vincent.cordobes@gmail.com>")
 (source (github VincentCordobes/prep))
 (homepage "https://github.com/VincentCordobes/prep")
 
@@ -11,5 +12,16 @@
  (name prep)
  (synopsis "Use spaced-repetition to learn new skills")
  (depends
-  (ocaml (>= 4.08))
-  (dune (>= 1.11))))
+  (ocaml (>= 4.09))
+  (dune (>= 2.0))
+  (ppx_expect :with-test)
+  base
+  stdio
+  ppx_deriving
+  ppx_deriving_yojson
+  fmt
+  cmdliner
+  yojson
+  ISO8601
+  uuidm
+ ))

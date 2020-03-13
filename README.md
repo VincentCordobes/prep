@@ -1,3 +1,5 @@
+[![Build](https://github.com/VincentCordobes/prep/workflows/Build/badge.svg)](https://github.com/VincentCordobes/prep/actions?query=workflow%3ABuild)
+
 <p align="center">
 <img src="https://user-images.githubusercontent.com/7091110/75851923-1f2d9480-5deb-11ea-96d8-312eef590016.png" alt="prep" />
 </p>
