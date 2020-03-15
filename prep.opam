@@ -7,7 +7,7 @@ license: "MIT"
 homepage: "https://github.com/VincentCordobes/prep"
 bug-reports: "https://github.com/VincentCordobes/prep/issues"
 depends: [
-  "ocaml" {>= "4.09"}
+  "ocaml" {>= "4.08"}
   "dune" {>= "2.0"}
   "ppx_expect" {with-test}
   "base"

@@ -12,7 +12,7 @@
  (name prep)
  (synopsis "Use spaced-repetition to learn new skills")
  (depends
-  (ocaml (>= 4.09))
+  (ocaml (>= 4.08))
   (dune (>= 2.0))
   (ppx_expect :with-test)
   base
