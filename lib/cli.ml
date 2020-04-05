@@ -47,16 +47,20 @@ let add_box interval =
         (Interval.to_string interval);
     end
 
+let date_of_datetime dt =
+  let open ISO8601.Permissive in
+  date (string_of_date dt)
 
-let next_review (interval: Interval.t) (card: Card.t) = 
+
+let next_review (interval : Interval.t) (card : Card.t) =
   Float.(
     let interval =
       let day_to_second n = of_int n * 24.0 * 60.0 * 60.0 in
       match interval with
-      | Day n -> day_to_second n 
+      | Day n -> day_to_second n
       | Week n -> day_to_second n * 7.0
     in
-    card.last_reviewed_at + interval)
+    (date_of_datetime card.last_reviewed_at) + interval)
 
 
 let print_cards ?interval cards =

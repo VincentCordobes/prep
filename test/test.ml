@@ -1,4 +1,5 @@
 open Prep
+open ISO8601.Permissive
 
 
 let drop_store () =
@@ -12,14 +13,15 @@ let drop_store () =
     end
 
 
-let before_all () = drop_store()
+let before_all () = 
+  drop_store(); 
+  Store.init ()
 
 let () = before_all ()
 
-let now = 1582818998.889
+let now = 1582818998.889 (* 2020-02-27T15:56:38Z *)
 
 let%expect_test "List empty default boxes" =
-  Store.init ();
   Cli.list_boxes ();
   [%expect{|
     Every 3 days
@@ -77,7 +79,7 @@ body|};
     No card.
   |}];
 
-  (* Should move the card at this end *)
+  (* Should move the card at the end *)
   Cli.rate ~at:now Card.Rating.Easy "blink182_-_all_the_small_things";
   [%expect {| Card rated easy |}];
   Cli.list_boxes ();
@@ -273,9 +275,10 @@ let%expect_test "next review date" =
   rate_card_good "sing";
 
   Cli.list_boxes ();
+  (* Note that there are 29 days in in feb 2020  *)
   [%expect{|
     Every 3 days
-    * song (last 2020-02-27, next 2020-03-01)
+    * song (last 2020-02-27, next 2020-03-01) 
     Every 1 week
     * sing (last 2020-02-27, next 2020-03-05)
     Every 8 days
@@ -314,4 +317,43 @@ let%expect_test "next review date" =
     * sing (last 2020-02-27, next 2020-04-09)
     Every 400 days
     No card.
+  |}]
+
+
+let%expect_test "Prep review" = 
+  (* setup *)
+  drop_store();
+  [%expect.output] |> ignore;
+
+
+  (* given *)
+  let card =
+    Card.
+      {
+        id = "awesome_card";
+        content = "Awesome card";
+        last_reviewed_at = datetime "2020-04-05T11:00:00";
+      }
+  in
+  let store =
+    Store.empty_store () |> Store.add_box @@ Box.create @@ Day 3 |> Store.add card
+  in
+  Store.init ~store ();
+  (* when *)
+  Cli.review (date "2020-04-05");
+  Cli.review (date "2020-04-06");
+  Cli.review (date "2020-04-07");
+  Cli.review (datetime "2020-04-08T00:00");
+  Cli.review (datetime "2020-04-08T10:00");
+  Cli.review (datetime "2020-04-08T12:00");
+  Cli.review (date "2020-04-09");
+  (* then *)
+  [%expect{| 
+    No card. 
+    No card. 
+    No card. 
+    * Awesome card (last 2020-04-05)
+    * Awesome card (last 2020-04-05)
+    * Awesome card (last 2020-04-05)
+    * Awesome card (last 2020-04-05)
   |}];

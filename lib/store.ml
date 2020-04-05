@@ -130,10 +130,10 @@ let default_store () =
   |> add_box @@ Box.create @@ Week 6
 
 
-let init () =
+let init ?(store=default_store ()) ()=
   if Sys.file_exists store_path then ()
   else
     begin
       Util.mkdir_p (Filename.dirname store_path) 0o777;
-      default_store () |> save
+      store |> save
     end
