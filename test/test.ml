@@ -34,11 +34,12 @@ let%expect_test "List empty default boxes" =
     No card.
   |}]
 
-
-let%expect_test "Add and rate a card" =
+let%expect_test "Add and Rate a card" =
+  (* when *)
   Cli.add @@ Some {|Blink182 - All the small things
 
-body|};
+  body|};
+  (* then *)
   [%expect {|Card added (id: blink182_-_all_the_small_things)|}];
 
   let expect_some_boxes_with_one_card () =
@@ -109,10 +110,10 @@ body|};
     No card.
     Every 6 weeks
     \* Blink182 - All the small things (.*) (regexp)
-  |}];
+  |}]
 
 
-  (* Show a card *)
+let%expect_test "Show a card" = 
   (try Cli.show_card "azerty" with _ -> ());
   [%expect {|
     Error: No card found with id azerty
@@ -122,7 +123,7 @@ body|};
   [%expect {|
     Blink182 - All the small things 
 
-    body
+      body
   |}];
 
   (* Partial match *)
@@ -130,7 +131,7 @@ body|};
   [%expect {|
     Blink182 - All the small things 
 
-    body
+      body
   |}];
 
   (* Partial match *)
@@ -138,7 +139,7 @@ body|};
   [%expect {|
     Blink182 - All the small things 
 
-    body
+      body
   |}];
 
   (* Exact match *)
@@ -160,17 +161,17 @@ body|};
   Cli.remove (fun _ -> Some 'y') "blink";
   [%expect{|
     You are about to remove the card blink, continue? [y/N]: Card removed.
-  |}];
+  |}]
 
 
-  (* Add a box *)
+let%expect_test "Add a box" = 
   Cli.add_box (Interval.Day 400) |> ignore;
-  [%expect {| Box added (repetitions every 400 days) |}];
+  [%expect {| Box added (repetitions every 400 days) |}]
 
-  (* Handle duplicate boxes *)
+
+let%expect_test "Handle duplicate boxes" = 
   Cli.add_box (Interval.Day 400) |> ignore;
   [%expect {| Error: A box with interval 400 days already exists |}];
-
   Cli.list_boxes ();
   [%expect{|
     Every 3 days
@@ -183,18 +184,20 @@ body|};
     \* Blink182 - All the small things (.*) (regexp)
     Every 400 days
     No card.
-  |}];
+  |}]
 
 
-  (* Edit card content *)
+let%expect_test "Edit card content" =
+  (* given *)
   let open_in_editor _  = 
     {|yo
 
-new body|} 
+  new body|} 
   in
+  (* when *)
   Cli.edit open_in_editor "blink";
+  (* then *)
   [%expect {| Edited card blink182_-_all_the_small_things (new name yo) |}];
-
   Cli.list_boxes ();
   [%expect{|
     Every 3 days
@@ -208,22 +211,21 @@ new body|}
     Every 400 days
     No card.
   |}];
-
   Cli.show_card "yo";
   [%expect {|
     yo 
 
-    new body
-  |}];
+      new body
+  |}]
 
 
-
-  (* Remove a card confirmation *)
+let%expect_test "Remove a card - abort" =
+  (* when *)
   Cli.remove (fun _ -> Some 'n') "yo";
+  (* then *)
   [%expect{|
     You are about to remove the card yo, continue? [y/N]: Aborted!
   |}];
-
   Cli.list_boxes ();
   [%expect{|
     Every 3 days
@@ -236,14 +238,16 @@ new body|}
     \* yo (.*) (regexp)
     Every 400 days
     No card.
-  |}];
+  |}]
 
-  (* Remove a card *)
+
+let%expect_test "Remove a card" =
+  (* when *)
   Cli.remove (fun _ -> Some 'y') "yo";
+  (* then *)
   [%expect{|
     You are about to remove the card yo, continue? [y/N]: Card removed.
   |}];
-
   Cli.list_boxes ();
   [%expect{|
     Every 3 days
@@ -320,11 +324,10 @@ let%expect_test "next review date" =
   |}]
 
 
-let%expect_test "Prep review" = 
+let%expect_test "prep review" = 
   (* setup *)
   drop_store();
   [%expect.output] |> ignore;
-
 
   (* given *)
   let card =
