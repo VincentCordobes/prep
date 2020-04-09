@@ -80,6 +80,20 @@ let%expect_test "Add and Rate a card" =
     No card.
   |}];
 
+  Cli.rate ~at:now Card.Rating.Again "blink182_-_all_the_small_things";
+  [%expect {| Card rated again |}];
+  Cli.list_boxes ();
+  [%expect{|
+    Every 3 days
+    No card.
+    Every 1 week
+    \* Blink182 - All the small things (.*) (regexp)
+    Every 8 days
+    No card.
+    Every 6 weeks
+    No card.
+  |}];
+
   (* Should move the card at the end *)
   Cli.rate ~at:now Card.Rating.Easy "blink182_-_all_the_small_things";
   [%expect {| Card rated easy |}];

@@ -254,10 +254,7 @@ let rate ~at (rating: Card.Rating.t) card_id =
      |> move_card_to 0 card_id 
      |> Store.save
 
-   | Again -> 
-     store
-     |> move_card_to (box_id - 1) card_id
-     |> Store.save
+   | Again -> ()
 
    | Good -> 
      store
