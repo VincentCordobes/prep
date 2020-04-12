@@ -16,10 +16,6 @@ The key to improve long-term memorization is to **distribute practice session ov
 
 The principle is simple. We have cards put into ~~platic~~ boxes.
 
-<p align="center">
-<img src="https://user-images.githubusercontent.com/7091110/78449902-ed724c80-767a-11ea-9512-bd1417cfdc71.png" alt="schema" />
-</p>
-
 A card is an item you want to learn/practice. It could be anything—from a plain plain text file to a video, a PDF, a song and so one. 
 
 Boxes are associated with a time interval—duration between each practice session. 
@@ -27,6 +23,9 @@ When we successfully review a card, it graduates to the next box and will be sho
 The first box is well suited for newly added cards or cards that are hard to grasp while the last box contains cards we already master.
 
 
+<p align="center">
+<img src="https://user-images.githubusercontent.com/7091110/78449902-ed724c80-767a-11ea-9512-bd1417cfdc71.png" alt="schema" />
+</p>
 Decks groups related card together. Let's say we are learning the drums and the capitals of the countries of the world. When starting a practice session, we don't want to mix them. It's a good idea to create a Deck for each of two.
 
 
