@@ -1,7 +1,8 @@
 type t = {
   id: string; 
   content: string; 
-  last_reviewed_at: float
+  box: int;
+  last_reviewed_at: float;
 } [@@deriving show, yojson]
 
 module Id : sig
@@ -12,8 +13,8 @@ end
 val generate_id: string -> string
 
 val create : string -> string -> float -> (t, string) result
-(** [create id content at] creates a new card with an [id] 
-    a [name] and a [content] [at] a the given time *)
+(** [create id content box_id at] creates a new card with an [id] 
+    a [name] and a [content] [at] the given time *)
 
 val title: t -> string
 

@@ -349,11 +349,14 @@ let%expect_test "prep review" =
       {
         id = "awesome_card";
         content = "Awesome card";
+        box = 0;
         last_reviewed_at = datetime "2020-04-05T11:00:00";
       }
   in
   let store =
-    Store.empty_store () |> Store.add_box @@ Box.create @@ Day 3 |> Store.add card
+    Store.empty_store () 
+    |> Store.add_box @@ Box.create @@ Day 3 
+    |> Store.add card
   in
   Store.init ~store ();
   (* when *)
@@ -373,4 +376,38 @@ let%expect_test "prep review" =
     * Awesome card (last 2020-04-05)
     * Awesome card (last 2020-04-05)
     * Awesome card (last 2020-04-05)
-  |}];
+  |}]
+
+let%expect_test "box are sorted by interval" =
+  drop_store();
+  [%expect.output] |> ignore;
+  (* given *)
+  let store = Store.empty_store () 
+              |> Store.add_box (Box.create @@ Day 4) 
+              |> Store.add_box (Box.create @@ Day 2) 
+              |> Store.add_box (Box.create @@ Week 2) 
+              |> Store.add_box (Box.create @@ Day 3) 
+              |> Store.add_box (Box.create @@ Day 8) 
+              |> Store.add_box (Box.create @@ Week 1) 
+  in
+  Store.init ~store ();
+
+  (* when *)
+  Cli.list_boxes ();
+
+  (* then *)
+  [%expect{|
+    Every 2 days
+    No card.
+    Every 3 days
+    No card.
+    Every 4 days
+    No card.
+    Every 1 week 
+    No card.
+    Every 8 days
+    No card.
+    Every 2 weeks
+    No card.
+  |}]
+

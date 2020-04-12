@@ -1,8 +1,10 @@
 module List = Base.List
 module Hashtbl = Base.Hashtbl
 
-type t = {boxes: Box.t list} 
-[@@deriving show, yojson {exn = true}]
+type t = {
+  boxes: Box.t list;
+  cards: Card.t list;
+} [@@deriving show, yojson {exn = true}]
 
 
 let store_path = 
@@ -12,6 +14,7 @@ let store_path =
     let store_name = "store.json" in
     let home = Sys.getenv "HOME" in
     Fmt.str "%s/%s/%s" home app_dir store_name
+
 
 let load () = 
   let json_value = Yojson.Safe.from_file store_path in
@@ -25,25 +28,27 @@ let save store =
 
 let add_box box store =
   {
+    store with
     boxes =
       List.sort (box :: store.boxes) ~compare:(fun a b ->
           Interval.compare a.interval b.interval);
   }
 
-let add card ?(at = 0) store =
-  let rec add i boxes =
-    match boxes with
-    | [] -> [Box.add card (Box.create (Interval.Day 1))]
-    | boxe :: boxes ->
-      if i = at then Box.add card boxe :: boxes
-      else boxe :: add (i - 1) boxes
-  in
-  let boxes = add 0 store.boxes in
-  {boxes}
+let add card store =
+  {
+    store with
+    cards = card :: List.filter store.cards ~f:(fun c -> c.id <> card.id);
+  }
+
+
+let set_card id card store =
+  {
+    store with
+    cards = card :: List.filter store.cards ~f:(fun card -> card.id <> id);
+  }
 
 let all_cards store =
-  List.concat_mapi store.boxes ~f:(fun i box ->
-      box.cards |> List.map ~f:(fun card -> (i, card)))
+  store.cards
 
 type find_card_error =
   | Card_not_found
@@ -57,19 +62,17 @@ let find_card ?(exact = false) card_id store =
   in
   let rec get_matches acc = function
     | [] -> acc
-    | (box_id, card) :: tail ->
-        if card_id = Card.(card.id) then [(box_id, card)]
+    | card :: tail ->
+        if card_id = Card.(card.id) then [card]
         else if (not exact) && partial_match card_id card.id then
-          get_matches ((box_id, card) :: acc) tail
+          get_matches (card :: acc) tail
         else get_matches acc tail
   in
   let matches = get_matches [] (all_cards store) in
   match matches with
   | [] -> Error Card_not_found
   | [x] -> Ok x
-  | all_matches ->
-      let cards = List.map all_matches ~f:(fun (_, card) -> card) in
-      Error (Ambigous_card_id cards)
+  | all_matches -> Error (Ambigous_card_id all_matches)
 
 
 exception Card_not_found
@@ -97,30 +100,21 @@ let exists ?(exact=false) card_id store =
 
 
 let move_card_to date to_box card_id store =
+  let card = find_card_exn card_id store in
+
   let boxes_count = List.length store.boxes in
-  let from_box, card = find_card_exn card_id store in
-  let to_box = 
-    if to_box < 0 then 0 
-    else if to_box >= boxes_count then 
-      (boxes_count - 1) 
-    else to_box 
+  let box_exists = to_box >= 0 && to_box < boxes_count in
+  let set_card_box to_box =
+    set_card card.id {card with box = to_box; last_reviewed_at = date} store
   in
-  let boxes =
-    List.mapi store.boxes ~f:(fun i box ->
-        let box = 
-          if i = from_box then Box.remove card.id box
-          else box in
-
-        if i = to_box then
-          Box.add {card with last_reviewed_at = date} box
-        else box
-      )
-  in
-  {boxes}
-
+  if box_exists then set_card_box to_box
+  else
+    if to_box < 0 then set_card_box 0
+    else if to_box >= boxes_count then set_card_box (boxes_count - 1)
+    else store
 
 let empty_store () =
-  {boxes = []}
+  {boxes = []; cards = []}
 
 let default_store () =
   empty_store ()

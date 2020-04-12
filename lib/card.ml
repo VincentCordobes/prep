@@ -1,7 +1,7 @@
 type t = {
   id: string; [@printer fun fmt -> fprintf fmt "%s"]
   content: string;
-  (* TODO: be less precise, maybe juste the day? *)
+  box: int;
   last_reviewed_at: float;
 } [@@deriving show, yojson]
 
@@ -23,7 +23,7 @@ let create id content last_reviewed_at =
   if content = "" then
     Error "content cannot be empty"
   else
-    Ok {id; content; last_reviewed_at}
+    Ok {id; content; box = 0; last_reviewed_at}
 
 
 let generate_id content =

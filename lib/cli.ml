@@ -42,7 +42,7 @@ let add_box interval =
     end
   else
     begin
-      Store.save (Store.add_box {interval; cards = []} store);
+      Store.save (Store.add_box {interval} store);
       Fmt.pr "Box added (repetitions every %a)" Console.green_s
         (Interval.to_string interval);
     end
@@ -86,34 +86,31 @@ let print_cards ?interval cards =
 
 let list_boxes () =
   let store = Store.load () in
-  List.iter store.boxes ~f:(fun {interval; cards} ->
+  List.iteri store.boxes ~f:(fun box_id {interval} ->
+      let cards = List.filter store.cards ~f:(fun card -> card.box = box_id) in
       Fmt.pr "Every %a\n"  Console.green_s (Interval.to_string interval);
       print_cards ~interval cards
     )
 
 let show_card id =
   let store = Store.load () in
-  let _, card = Store.find_card_exn id store in
+  let card = Store.find_card_exn id store in
   Fmt.pr "%s\n" card.content
 
 
 let edit open_in_editor card_id =
   let store = Store.load () in
-  let box_id, card = Store.find_card_exn card_id store in
+  let card = Store.find_card_exn card_id store in
   let new_content = open_in_editor (card.content ^ Editor.default_template) in
   let new_id = Card.generate_id new_content in
   let new_card = 
     {card with content = new_content; 
                id = new_id}
   in
-  Store.save
-    {
-      boxes =
-        List.mapi store.boxes ~f:(fun i box ->
-            if i = box_id then
-              Box.set card.id new_card box
-            else box);
-    };
+  store
+  |> Store.set_card card.id new_card 
+  |> Store.save;
+
   if (String.(new_id = card.id)) then
     Fmt.pr "Edited card %a@." Console.yellow_s @@ new_card.id
   else
@@ -122,19 +119,16 @@ let edit open_in_editor card_id =
 
 let remove input_char card_id =
   let store = Store.load () in
-  let box_id, card = Store.find_card_exn card_id store in
-  Fmt.pr "You are about to remove the card %a, continue? [y/N]: %!" Console.magenta_s
+  let card = Store.find_card_exn card_id store in
+  Fmt.pr "You are about to remove the card %a, continue? [y/N]: %!"
+    Console.magenta_s
   @@ Card.title card;
   match input_char () with
   | Some c when Char.(c = 'y' || c = 'Y') ->
-      let sp : Store.t =
-        {
-          boxes =
-            List.mapi store.boxes ~f:(fun i box ->
-                if i = box_id then Box.remove card.id box else box);
-        }
+      let cards =
+        List.filter store.cards ~f:(fun card -> not String.(card.id = card_id))
       in
-      Store.save sp;
+      Store.save {store with cards};
       Fmt.pr "Card removed.@."
   | _ -> Fmt.pr "Aborted!@."
  
@@ -149,8 +143,8 @@ let move_card ~at card_id box_id =
 
 let move_down ~at card_id =
   let store = Store.load () in
-  let box_id, _ = Store.find_card_exn card_id store in
-  Store.move_card_to at (box_id - 1) card_id store
+  let card = Store.find_card_exn card_id store in
+  Store.move_card_to at (card.box- 1) card_id store
   |> Store.save
 
 let content_arg =
@@ -192,10 +186,10 @@ let list_boxes_cmd =
 
 
 let complete_ids () =
-  let store = Store.load() in
-  let cards = Store.all_cards(store) in
-  List.iter cards ~f:(fun (_,card) -> Fmt.pr "%s " Card.(card.id));
-  Fmt.pr("@.")
+  let store = Store.load () in
+  let cards = store.cards in
+  List.iter cards ~f:(fun card -> Fmt.pr "%s " Card.(card.id));
+  Fmt.pr "@."
 
 
 let complete_ids_cmd =
@@ -246,7 +240,7 @@ let move_down_cmd =
 let rate ~at (rating: Card.Rating.t) card_id =
   let open Card.Rating in
   let store = Store.load () in
-  let box_id, _ = Store.find_card_exn card_id store in
+  let card = Store.find_card_exn card_id store in
   let move_card_to = Store.move_card_to at in
   (match rating with
    | Bad -> 
@@ -258,12 +252,12 @@ let rate ~at (rating: Card.Rating.t) card_id =
 
    | Good -> 
      store
-     |> move_card_to (box_id + 1) card_id
+     |> move_card_to (card.box + 1) card_id
      |> Store.save
 
    | Easy ->
      store
-     |> move_card_to ((List.length store.boxes) - 1) card_id
+     |> move_card_to (List.length store.boxes - 1) card_id
      |> Store.save);
 
   Fmt.pr "Card rated %a\n" Console.magenta_s
@@ -294,15 +288,14 @@ let rate_cmd =
 
 
 
-let review (now) =
+let review now =
   let open Box in
-  let should_review (interval : Interval.t) (card : Card.t) =
-    Float.((next_review interval card) <= now)
-  in
   let store = Store.load () in
-  List.bind store.boxes ~f:(fun (box: Box.t) ->
-      List.filter box.cards ~f:(should_review box.interval))
-  |> print_cards 
+  let should_review (card : Card.t) =
+    let box = List.nth_exn store.boxes card.box in
+    Float.(next_review box.interval card <= now)
+  in
+  List.filter store.cards ~f:should_review |> print_cards
 
 
 let review_cmd =
