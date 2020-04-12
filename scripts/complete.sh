@@ -4,6 +4,19 @@ _gen_comp() {
   COMPREPLY=($(compgen -W "$1" -- "$2"))
 }
 
+
+_complete_ids () {
+  ids=""
+  for id in $(prep complete-ids); do
+    # idk why compgen removes my escape :(
+    x="$(printf '%q' "$id")"
+    x="$(printf '%q' "$x")"
+    ids="$x $ids"
+  done
+
+  _gen_comp "$(echo $ids)" "$1"
+}
+
 _prep() {
   cmd=${COMP_WORDS[1]}
   subcmd=${COMP_WORDS[2]}
@@ -20,17 +33,19 @@ _prep() {
           _gen_comp "bad again good easy" "$cur";;
 
         show | edit | remove | move-down)
-          _gen_comp "$(prep complete-ids)" "$cur";;
+          _complete_ids "$cur"
       esac;;
 
     3)
       case "$subcmd" in
         bad | again | good | easy)
-          _gen_comp "$(prep complete-ids)" "$cur";;
+          _complete_ids "$cur"
       esac
 
   esac
 
 }
+
+
 
 complete -F _prep prep

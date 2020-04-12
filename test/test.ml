@@ -378,7 +378,7 @@ let%expect_test "prep review" =
     * Awesome card (last 2020-04-05)
   |}]
 
-let%expect_test "box are sorted by interval" =
+let%expect_test "Box are sorted by interval" =
   drop_store();
   [%expect.output] |> ignore;
   (* given *)
