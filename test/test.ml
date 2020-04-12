@@ -61,9 +61,19 @@ let%expect_test "Add and Rate a card" =
   [%expect {| Card rated bad |}];
   expect_some_boxes_with_one_card ();
 
-  Cli.rate ~at:now Card.Rating.Again "blink182_-_all_the_small_things";
+  (* should not move the card but still update the last reviewed *)
+  Cli.rate ~at:(datetime "2020-01-01T11:00:00") Card.Rating.Again "blink182_-_all_the_small_things";
   [%expect {| Card rated again |}];
-  expect_some_boxes_with_one_card ();
+  Cli.list_boxes ();
+  [%expect{|
+    Every 3 days
+    * Blink182 - All the small things (last 2020-01-01, next 2020-01-04)
+    Every 1 week
+    No card.
+    Every 8 days
+    No card.
+    Every 6 weeks
+    No card. |}];
 
   (* Should move the card a to the next box*)
   Cli.rate ~at:now Card.Rating.Good "blink182";
