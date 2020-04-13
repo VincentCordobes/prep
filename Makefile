@@ -14,7 +14,7 @@ uninstall:
 	dune uninstall
 
 test:
-	dune runtest -f
+	dune runtest
 
 clean:
 	dune clean && rm -rf ./_build *.opam *.merlin

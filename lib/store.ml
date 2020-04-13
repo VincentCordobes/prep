@@ -56,19 +56,20 @@ type find_card_error =
 
 let find_card ?(exact = false) card_id store =
   let partial_match a b =
-    Str.string_partial_match
-      (Str.regexp (String.lowercase_ascii a))
-      (String.lowercase_ascii b) 0
+    let regexp = Re.Pcre.re (String.lowercase_ascii a) |> Re.compile in
+    Re.execp regexp (String.lowercase_ascii b)
   in
   let rec get_matches acc = function
     | [] -> acc
     | card :: tail ->
         if card_id = Card.(card.id) then [card]
-        else if (not exact) && partial_match card_id card.id then
-          get_matches (card :: acc) tail
+        else if
+          (not exact)
+          && (partial_match card_id card.id || partial_match card.id card_id)
+        then get_matches (card :: acc) tail
         else get_matches acc tail
   in
-  let matches = get_matches [] (all_cards store) in
+  let matches = get_matches [] store.cards in
   match matches with
   | [] -> Error Card_not_found
   | [x] -> Ok x

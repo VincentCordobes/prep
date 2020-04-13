@@ -166,6 +166,14 @@ let%expect_test "Show a card" =
       body
   |}];
 
+  (* partial match in the middle *)
+  Cli.show_card "all";
+  [%expect {|
+    Blink182 - All the small things 
+
+      body
+  |}];
+
   (* Exact match *)
   Cli.add @@ Some {|blink|};
   [%expect {| Card added (id: blink) |}];

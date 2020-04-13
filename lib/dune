@@ -2,6 +2,7 @@
   (name prep)
   (public_name prep)
 	(libraries stdio
+             re
              base
              str
              uuidm
