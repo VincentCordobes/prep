@@ -34,37 +34,46 @@ let%expect_test "List empty default boxes" =
     No card.
   |}]
 
-let%expect_test "Add and Rate a card" =
+let%expect_test "Add a card" =
   (* when *)
   Cli.add @@ Some {|Blink182 - All the small things
 
   body|};
   (* then *)
   [%expect {|Card added (id: blink182_-_all_the_small_things)|}];
+  Cli.list_boxes ();
+  [%expect{|
+    Every 3 days
+    \* Blink182 - All the small things (.*) (regexp)
+    Every 1 week
+    No card.
+    Every 8 days
+    No card.
+    Every 6 weeks
+    No card. |}]
 
-  let expect_some_boxes_with_one_card () =
-    Cli.list_boxes ();
-    [%expect{|
-      Every 3 days
-      \* Blink182 - All the small things (.*) (regexp)
-      Every 1 week
-      No card.
-      Every 8 days
-      No card.
-      Every 6 weeks
-      No card. |}] in
-  expect_some_boxes_with_one_card ();
-
-  (* Card Rating *)
-  (* Should not move the card *)
+let%expect_test "Card Rating" = 
+  (* when *)
   Cli.rate ~at:now Card.Rating.Bad "blink182_-_all_the_small_things";
+  (* then *)
   [%expect {| Card rated bad |}];
-  expect_some_boxes_with_one_card ();
+  Cli.list_boxes ();
+  [%expect{|
+    Every 3 days
+    \* Blink182 - All the small things (.*) (regexp)
+    Every 1 week
+    No card.
+    Every 8 days
+    No card.
+    Every 6 weeks
+    No card. |}];
 
-  (* should not move the card but still update the last reviewed *)
+  (* when *)
   Cli.rate ~at:(datetime "2020-01-01T11:00:00") Card.Rating.Again "blink182_-_all_the_small_things";
   [%expect {| Card rated again |}];
   Cli.list_boxes ();
+  (* then *)
+  (* should not move the card but still update the last reviewed *)
   [%expect{|
     Every 3 days
     * Blink182 - All the small things (last 2020-01-01, next 2020-01-04)
@@ -75,10 +84,12 @@ let%expect_test "Add and Rate a card" =
     Every 6 weeks
     No card. |}];
 
-  (* Should move the card a to the next box*)
+  (* when *)
   Cli.rate ~at:now Card.Rating.Good "blink182";
   [%expect {| Card rated good |}];
   Cli.list_boxes ();
+  (* then *)
+  (* Should move the card a to the next box*)
   [%expect{|
     Every 3 days
     No card.
@@ -87,12 +98,13 @@ let%expect_test "Add and Rate a card" =
     Every 8 days
     No card.
     Every 6 weeks
-    No card.
-  |}];
+    No card. |}];
 
+  (* when *)
   Cli.rate ~at:now Card.Rating.Again "blink182_-_all_the_small_things";
   [%expect {| Card rated again |}];
   Cli.list_boxes ();
+  (* then *)
   [%expect{|
     Every 3 days
     No card.
@@ -104,10 +116,12 @@ let%expect_test "Add and Rate a card" =
     No card.
   |}];
 
-  (* Should move the card at the end *)
+  (* when *)
   Cli.rate ~at:now Card.Rating.Easy "blink182_-_all_the_small_things";
   [%expect {| Card rated easy |}];
   Cli.list_boxes ();
+  (* then *)
+  (* should move the card at the end *)
   [%expect{|
     Every 3 days
     No card.
@@ -119,12 +133,14 @@ let%expect_test "Add and Rate a card" =
     \* Blink182 - All the small things (.*) (regexp)
   |}];
 
-  (* Should not move the card *)
+  (* when *)
   Cli.rate ~at:now Card.Rating.Easy "blink182_-_all_the_small_things";
   [%expect {| Card rated easy |}];
   Cli.rate ~at:now Card.Rating.Good "blink182_-_all_the_small_things";
   [%expect {| Card rated good |}];
   Cli.list_boxes ();
+  (* then *)
+  (* Should not move the card *)
   [%expect{|
     Every 3 days
     No card.
