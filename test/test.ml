@@ -406,10 +406,10 @@ let%expect_test "prep review" =
     No card. 
     No card. 
     No card. 
-    * Awesome card (last 2020-04-05)
-    * Awesome card (last 2020-04-05)
-    * Awesome card (last 2020-04-05)
-    * Awesome card (last 2020-04-05)
+    * Awesome card (box #1)
+    * Awesome card (box #1)
+    * Awesome card (box #1)
+    * Awesome card (box #1)
   |}]
 
 let%expect_test "Box are sorted by interval" =

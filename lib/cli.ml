@@ -71,7 +71,7 @@ let print_cards ?interval cards =
 
   let pp_content ppf card =
     match interval with
-    | None -> pf ppf "%a %a" grey "last" pp_date card.last_reviewed_at
+    | None -> pf ppf "%a #%d" grey "box" (card.box + 1)
     | Some interval -> pf ppf "%a %a%a %a" grey "last" pp_date card.last_reviewed_at grey ", next"
       pp_date (next_review interval card)
   in
