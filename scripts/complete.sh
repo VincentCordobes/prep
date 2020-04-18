@@ -24,7 +24,7 @@ _prep() {
 
   case "$COMP_CWORD" in
     1)
-      _gen_comp "add add-box edit list-boxes move-down rate review remove show" "$cur"
+      _gen_comp "add add-file add-box edit list-boxes move-down rate review remove show" "$cur"
       ;;
 
     2)

@@ -19,7 +19,7 @@ let rec add ?(last_reviewed_at = Unix.time ()) ?(retry = false) content  =
     Caml.(input_char Caml.stdin) |> ignore;
     add (Some content) ~retry:true)
   else
-    match Card.create id content last_reviewed_at with
+    match Card.create id (Plain content) last_reviewed_at with
     | Ok card -> (
           let updated_store = Store.add card store in
           Store.save updated_store;
@@ -27,6 +27,23 @@ let rec add ?(last_reviewed_at = Unix.time ()) ?(retry = false) content  =
     | Error msg -> failwith msg
 
 
+let add_file ?(last_reviewed_at = Unix.time ()) file =
+  let open Caml in
+  let store = Store.load () in
+  let id = Card.generate_id (Filename.basename file) in
+  let exists = Store.exists ~exact:true id store in
+  if exists then Fmt.pr "This path already exists@."
+  else
+    let path =
+      if Filename.is_relative file
+      then Filename.concat (Sys.getcwd ()) file
+      else file
+    in
+    match Card.create id (File path) last_reviewed_at with
+    | Ok card ->
+        store |> Store.add card |> Store.save;
+        Fmt.pr "Card added (id: %s)\n" card.id
+    | Error msg -> failwith msg
 
 
 let add_box interval =
@@ -46,6 +63,7 @@ let add_box interval =
       Fmt.pr "Box added (repetitions every %a)" Console.green_s
         (Interval.to_string interval);
     end
+
 
 let date_of_datetime dt =
   let open ISO8601.Permissive in
@@ -92,19 +110,43 @@ let list_boxes () =
       print_cards ~interval cards
     )
 
+
+let show_file_content path =
+  let filetype = Caml.Filename.extension path in
+  let can_open_with_editor =
+    List.exists [".md"; ".txt"; ""] ~f:(fun extension ->
+        String.(extension = filetype))
+  in
+  let candidates =
+    if can_open_with_editor then
+      match Caml.Sys.getenv_opt "EDITOR" with Some x -> [x] | None -> []
+    else []
+  in
+  let candidates = candidates @ ["open"; "xdg-open"] in
+  List.exists
+    ~f:(fun bin ->
+      Caml.Sys.command (bin ^ " " ^ Caml.Filename.quote path ^ " 2> /dev/null")
+      <> 127)
+    candidates
+  |> ignore
+
+
 let show_card id =
   let store = Store.load () in
   let card = Store.find_card_exn id store in
-  Fmt.pr "%s\n" card.content
+  match card.content with
+  | Plain text -> Fmt.pr "%s\n" text
+  | File path -> show_file_content path
 
 
 let edit open_in_editor card_id =
   let store = Store.load () in
   let card = Store.find_card_exn card_id store in
-  let new_content = open_in_editor (card.content ^ Editor.default_template) in
+  let content = match card.content with Plain text | File text -> text in
+  let new_content = open_in_editor (content ^ Editor.default_template) in
   let new_id = Card.generate_id new_content in
   let new_card = 
-    {card with content = new_content; 
+    {card with content = Plain new_content; 
                id = new_id}
   in
   store
@@ -126,13 +168,12 @@ let remove input_char card_id =
   match input_char () with
   | Some c when Char.(c = 'y' || c = 'Y') ->
       let cards =
-        List.filter store.cards ~f:(fun card -> not String.(card.id = card_id))
+        List.filter store.cards ~f:(fun c -> not String.(c.id = card.id))
       in
       Store.save {store with cards};
       Fmt.pr "Card removed.@."
   | _ -> Fmt.pr "Aborted!@."
  
-
 
 let move_card ~at card_id box_id =
   let store = Store.load () in
@@ -140,12 +181,12 @@ let move_card ~at card_id box_id =
   |> Store.save
 
 
-
 let move_down ~at card_id =
   let store = Store.load () in
   let card = Store.find_card_exn card_id store in
   Store.move_card_to at (card.box- 1) card_id store
   |> Store.save
+
 
 let content_arg =
   Arg.(
@@ -160,6 +201,18 @@ let add_cmd =
   let now = Unix.time () in
   let action = Term.(const (add ~last_reviewed_at:now ~retry:false) $ content_arg) in
   let info = Term.info "add" ~exits:Term.default_exits in
+  (action, info)
+
+let add_file_cmd =
+  let now = Unix.time () in
+  let path_arg = Arg.(
+    info [] ~docv:"PATH" ~doc:"path of the card"
+    |> pos ~rev:true 0 (some file) None
+    |> required
+  ) in
+
+  let action = Term.(const (add_file ~last_reviewed_at:now) $ path_arg) in
+  let info = Term.info "add-file" ~exits:Term.default_exits in
   (action, info)
 
 
@@ -178,7 +231,6 @@ let add_box_cmd =
   let action = Term.(const add_box $ interval_arg)  in
   let info = Term.info "add-box" in
   (action, info)
-
 
 
 let list_boxes_cmd =
@@ -229,7 +281,6 @@ let move_card_cmd =
       |> required
     ) in
   (Term.(const (move_card ~at:now) $ card_id_arg $ box_id_arg), Term.info "move")
-
 
 
 let move_down_cmd =
@@ -287,7 +338,6 @@ let rate_cmd =
   let action = Term.(const (rate ~at:now) $ rating_arg $ card_id_arg ) in
   let info = Term.info "rate" in
   (action , info)
-
 
 
 let review now =

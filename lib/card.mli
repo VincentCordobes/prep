@@ -1,9 +1,15 @@
+type content =
+  | File of string
+  | Plain of string
+
+
 type t = {
   id: string; 
-  content: string; 
+  content: content [@printer pp_content]; 
   box: int;
   last_reviewed_at: float;
 } [@@deriving show, yojson]
+
 
 module Id : sig
   type t = string
@@ -12,11 +18,17 @@ end
 
 val generate_id: string -> string
 
-val create : string -> string -> float -> (t, string) result
+val create : string -> content -> float -> (t, string) result
 (** [create id content box_id at] creates a new card with an [id] 
     a [name] and a [content] [at] the given time *)
 
 val title: t -> string
+
+val pp_content : Format.formatter -> content -> unit
+
+val content_to_yojson : content -> Yojson.t
+
+val content_of_yojson : Yojson.Safe.t -> (content, string) result
 
 module Rating : sig
   type t = Bad | Again | Good | Easy

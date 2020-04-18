@@ -34,7 +34,18 @@ let%expect_test "List empty default boxes" =
     No card.
   |}]
 
+let%expect_test "Add a file card" =
+  (* when *)
+  Cli.add_file "./knocking on heaven door";
+  (* then *)
+  [%expect {|Card added (id: knocking_on_heaven_door)|}]
+
+
 let%expect_test "Add a card" =
+  drop_store();
+  [%expect.output] |> ignore;
+  Store.init ();
+
   (* when *)
   Cli.add @@ Some {|Blink182 - All the small things
 
@@ -51,6 +62,8 @@ let%expect_test "Add a card" =
     No card.
     Every 6 weeks
     No card. |}]
+
+
 
 let%expect_test "Card Rating" = 
   (* when *)
@@ -238,14 +251,14 @@ let%expect_test "Handle duplicate boxes" =
 let%expect_test "Edit card content" =
   (* given *)
   let open_in_editor _  = 
-    {|yo
+    {|yoo
 
   new body|} 
   in
   (* when *)
   Cli.edit open_in_editor "blink";
   (* then *)
-  [%expect {| Edited card blink182_-_all_the_small_things (new name yo) |}];
+  [%expect {| Edited card blink182_-_all_the_small_things (new name yoo) |}];
   Cli.list_boxes ();
   [%expect{|
     Every 3 days
@@ -255,13 +268,13 @@ let%expect_test "Edit card content" =
     Every 8 days
     No card.
     Every 6 weeks
-    \* yo (.*) (regexp)
+    \* yoo (.*) (regexp)
     Every 400 days
     No card.
   |}];
-  Cli.show_card "yo";
+  Cli.show_card "yoo";
   [%expect {|
-    yo 
+    yoo
 
       new body
   |}]
@@ -269,10 +282,10 @@ let%expect_test "Edit card content" =
 
 let%expect_test "Remove a card - abort" =
   (* when *)
-  Cli.remove (fun _ -> Some 'n') "yo";
+  Cli.remove (fun _ -> Some 'n') "yoo";
   (* then *)
   [%expect{|
-    You are about to remove the card yo, continue? [y/N]: Aborted!
+    You are about to remove the card yoo, continue? [y/N]: Aborted!
   |}];
   Cli.list_boxes ();
   [%expect{|
@@ -283,7 +296,7 @@ let%expect_test "Remove a card - abort" =
     Every 8 days
     No card.
     Every 6 weeks
-    \* yo (.*) (regexp)
+    \* yoo (.*) (regexp)
     Every 400 days
     No card.
   |}]
@@ -294,7 +307,7 @@ let%expect_test "Remove a card" =
   Cli.remove (fun _ -> Some 'y') "yo";
   (* then *)
   [%expect{|
-    You are about to remove the card yo, continue? [y/N]: Card removed.
+    You are about to remove the card yoo, continue? [y/N]: Card removed.
   |}];
   Cli.list_boxes ();
   [%expect{|
@@ -382,7 +395,7 @@ let%expect_test "prep review" =
     Card.
       {
         id = "awesome_card";
-        content = "Awesome card";
+        content = Plain "Awesome card";
         box = 0;
         last_reviewed_at = datetime "2020-04-05T11:00:00";
       }

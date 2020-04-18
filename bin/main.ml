@@ -20,6 +20,7 @@ let () =
         complete_ids_cmd;
         show_card_cmd;
         add_cmd;
+        add_file_cmd;
         add_box_cmd;
         edit_cmd;
         remove_cmd;

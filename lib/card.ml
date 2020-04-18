@@ -1,9 +1,41 @@
+type content =
+  | File of string
+  | Plain of string
+
+let pp_content fmt content =
+  match content with
+  | Plain text -> Fmt.pf fmt "%s" text
+  | File path -> Fmt.pf fmt "%s" path
+
+
+let content_to_yojson content =
+  match content with
+  | Plain text  -> `Assoc [("type", `String "Plain"); 
+                           ("value", `String text)]
+  | File path -> `Assoc [("type", `String "File"); 
+                         ("path", `String path)]
+
+
+let content_of_yojson content =
+  let open Yojson.Safe.Util in
+  let content_type = content |> member "type" |> to_string in
+  match content_type with
+  | "Plain" ->
+      let value = member "value" content |> to_string in
+      Ok (Plain value)
+  | "File" ->
+      let path = member "path" content |> to_string in
+      Ok (File path)
+  | _ -> Error "Invalid card content"
+
+
 type t = {
-  id: string; [@printer fun fmt -> fprintf fmt "%s"]
-  content: string;
+  id: string; 
+  content: content [@printer pp_content];
   box: int;
   last_reviewed_at: float;
 } [@@deriving show, yojson]
+
 
 module Id = struct
   type t = string
@@ -19,11 +51,13 @@ module Id = struct
     | false -> id
 end
 
+
+
 let create id content last_reviewed_at =
-  if content = "" then
-    Error "content cannot be empty"
-  else
-    Ok {id; content; box = 0; last_reviewed_at}
+  match content with
+  | Plain text | File text ->
+      if text = "" then Error "content cannot be empty"
+      else Ok {id; content; box = 0; last_reviewed_at}
 
 
 let generate_id content =
@@ -34,7 +68,10 @@ let generate_id content =
   |> String.substr_replace_all ~pattern:" " ~with_:"_"
 
 
-let title card = Base.(String.split_lines card.content |> List.hd_exn)
+let title card = 
+  match card.content with
+  | Plain text -> Base.(String.split_lines text |> List.hd_exn)
+  | File path -> Filename.basename path 
 
 
 
