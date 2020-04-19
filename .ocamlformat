@@ -1,4 +1,5 @@
 profile = conventional 
-space-around-records = false
-space-around-lists = false
-space-around-arrays = false
+ocp-indent-compat = true
+if-then-else = fit-or-vertical
+exp-grouping = preserve
+type-decl = sparse
