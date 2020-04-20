@@ -118,9 +118,10 @@ let list_decks () =
   | [] -> Fmt.pr "No decks@."
   | _ ->
       let print_deck deck =
-        Fmt.pr "%s\n" deck;
-        List.filter store.cards ~f:(fun card -> String.(card.deck = deck))
-        |> print_cards
+        if String.(store.current_deck = deck) then
+          Fmt.pr "* %s\n" deck
+        else
+          Fmt.pr "  %s\n" deck
       in
       List.iter store.decks ~f:(fun deck -> print_deck deck.id)
 

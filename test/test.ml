@@ -473,8 +473,7 @@ let%expect_test "Decks" =
   Cli.list_decks ();
   (* then display default deck*)
   [%expect {|
-    default
-    No card.
+    * default
   |}];
 
   (* when adding a new deck*)
@@ -482,41 +481,53 @@ let%expect_test "Decks" =
   Cli.list_decks ();
   (* then *)
   [%expect {|
-    default
-    No card.
-    custom_deck
-    No card.
+    * default
+      custom_deck
   |}];
 
   (* when adding a card *)
   Cli.add_file "./dilaudid";
   [%expect.output] |> ignore;
   Cli.list_decks ();
+  Cli.list_boxes ();
   (* then it's added to the default deck *)
   [%expect
     {|
-    default
-    * dilaudid (box #1)
-    custom_deck
+    * default
+      custom_deck
+    Every 3 days
+    \* dilaudid (.*) (regexp)
+    Every 1 week
     No card.
-  |}];
+    Every 8 days
+    No card.
+    Every 6 weeks
+    No card. |}];
 
   (* when switching the current deck*)
   Cli.use_deck "custom_deck";
+  Cli.list_boxes ();
   (* then *)
-  [%expect {| Using deck custom_deck |}];
+  [%expect
+    {| 
+    Using deck custom_deck 
+    Every 3 days
+    No card.
+    Every 1 week
+    No card.
+    Every 8 days
+    No card.
+    Every 6 weeks
+    No card. |}];
 
   (* when adding a card to the current deck *)
   Cli.add_file "./vince";
   [%expect.output] |> ignore;
   Cli.list_decks ();
   (* then *)
-  [%expect
-    {|
-     default
-     * dilaudid (box #1)
-     custom_deck
-     * vince (box #1)
+  [%expect {|
+       default
+     * custom_deck
    |}];
 
   (* when listing cards *)
@@ -543,8 +554,7 @@ let%expect_test "use-deck" =
   Cli.list_decks ();
   (* then display default deck*)
   [%expect {|
-    default
-    No card.
+    * default
   |}];
 
   (* when the deck doesnt exists *)
@@ -556,10 +566,8 @@ let%expect_test "use-deck" =
   Cli.list_decks ();
   (* then it create an empty deck*)
   [%expect {|
-    default
-    No card.
-    toto
-    No card.
+      default
+    * toto
   |}];
 
   (* when adding a deck *)
@@ -567,15 +575,10 @@ let%expect_test "use-deck" =
   Cli.add_deck "titi" None;
   Cli.list_decks ();
   (* then *)
-  [%expect
-    {|
-    default
-    No card.
-    toto
-    No card.
-    tata
-    No card.
-    titi
-    No card.
+  [%expect {|
+      default
+    * toto
+      tata
+      titi
   |}]
 
