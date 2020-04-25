@@ -505,7 +505,7 @@ let%expect_test "Decks" =
     No card. |}];
 
   (* when switching the current deck*)
-  Cli.use_deck "custom_deck";
+  Cli.use_deck ~input_char:(fun _ -> None) "custom_deck";
   Cli.list_boxes ();
   (* then *)
   [%expect
@@ -557,14 +557,22 @@ let%expect_test "use-deck" =
     * default
   |}];
 
-  (* when the deck doesnt exists *)
-  Cli.use_deck "toto";
-  [%expect {| 
-    Deck toto created
-    Using deck toto
-  |}];
+  (* when the deck doesnt exists and we dont want to create it *)
+  Cli.use_deck ~input_char:(fun _ -> Some 'n') "toto";
+  [%expect
+    {|Deck toto doesn't exist. Do you want to create it? [y/N] Aborted!|}];
   Cli.list_decks ();
-  (* then it create an empty deck*)
+  (* then it doesn't create it *)
+  [%expect {| * default |}];
+
+  (* when the deck doesnt exists and we want to create it *)
+  Cli.use_deck ~input_char:(fun _ -> Some 'y') "toto";
+  [%expect
+    {| 
+    Deck toto doesn't exist. Do you want to create it? [y/N] Deck created.
+    Using deck toto |}];
+  Cli.list_decks ();
+  (* then it creates a new one *)
   [%expect {|
       default
     * toto
@@ -581,4 +589,3 @@ let%expect_test "use-deck" =
       tata
       titi
   |}]
-

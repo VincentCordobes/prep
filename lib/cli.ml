@@ -130,17 +130,21 @@ let add_deck name parent =
   |> Store.add_deck (Deck.create ~id:name ~deck_id:parent ())
   |> Store.save
 
-let rec use_deck name =
+let rec use_deck ~input_char name =
   let store = Store.load () in
   match List.find ~f:(fun deck -> String.(deck.id = name)) store.decks with
   | Some _ ->
       Store.save { store with current_deck = name };
       Fmt.pr "Using deck %s@." name
-  | None ->
-      let store = store |> Store.add_deck (Deck.create ~id:name ()) in
-      Store.save store;
-      Fmt.pr "Deck %s created@." name;
-      use_deck name
+  | None -> (
+      Fmt.pr "Deck %s doesn't exist. Do you want to create it? [y/N] %!" name;
+      match input_char () with
+      | Some c when Char.(c = 'y' || c = 'Y') ->
+          let store = store |> Store.add_deck (Deck.create ~id:name ()) in
+          Store.save store;
+          Fmt.pr "Deck created.@.";
+          use_deck ~input_char name
+      | _ -> Fmt.pr "Aborted!@." )
 
 let show_file_content path =
   let filetype = Caml.Filename.extension path in
@@ -372,6 +376,7 @@ let use_deck_cmd =
       |> pos ~rev:true 0 (some string) None
       |> required)
   in
-  let action = Term.(const use_deck $ name_arg) in
+  let input_char () = Stdio.(In_channel.input_char Caml.stdin) in
+  let action = Term.(const (use_deck ~input_char) $ name_arg) in
   let info = Term.info "use-deck" in
   (action, info)
