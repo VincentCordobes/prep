@@ -22,10 +22,13 @@ let rec add ?(last_reviewed_at = Unix.time ()) ?(retry = false) content =
         Fmt.pr "Card added (id: %s)\n" card.id
     | Error msg -> failwith msg
 
-let add_file ?(last_reviewed_at = Unix.time ()) file =
+let add_file name ?(last_reviewed_at = Unix.time ()) file =
   let open Caml in
   let store = Store.load () in
-  let id = Card.generate_id (Filename.basename file) in
+  let id =
+    Card.generate_id
+      (match name with None -> Filename.basename file | Some s -> s)
+  in
   let exists = Store.exists ~exact:true id store in
   if exists then
     Fmt.pr "This path already exists@."
@@ -37,7 +40,9 @@ let add_file ?(last_reviewed_at = Unix.time ()) file =
         file
     in
     match
-      Card.create id ~deck:store.current_deck (File path) last_reviewed_at
+      Card.create id ~deck:store.current_deck
+        (File (name, path))
+        last_reviewed_at
     with
     | Ok card ->
         store |> Store.add card |> Store.save;
@@ -171,12 +176,12 @@ let show_card id =
   let card = Store.find_card_exn id store in
   match card.content with
   | Plain text -> Fmt.pr "%s\n" text
-  | File path -> show_file_content path
+  | File (_, path) -> show_file_content path
 
 let edit open_in_editor card_id =
   let store = Store.load () in
   let card = Store.find_card_exn card_id store in
-  let content = match card.content with Plain text | File text -> text in
+  let content = match card.content with Plain text | File (_, text) -> text in
   let new_content = open_in_editor (content ^ Editor.default_template) in
   let new_id = Card.generate_id new_content in
   let new_card = { card with content = Plain new_content; id = new_id } in
@@ -237,7 +242,15 @@ let add_file_cmd =
       |> required)
   in
 
-  let action = Term.(const (add_file ~last_reviewed_at:now) $ path_arg) in
+  let name_arg =
+    Arg.(
+      info [ "n"; "name" ] ~docv:"NAME" ~doc:"Name of the card"
+      |> opt (some string) None
+      |> value)
+  in
+  let action =
+    Term.(const (add_file ~last_reviewed_at:now) $ name_arg $ path_arg)
+  in
   let info = Term.info "add-file" ~exits:Term.default_exits in
   (action, info)
 

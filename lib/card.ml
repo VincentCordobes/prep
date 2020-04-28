@@ -1,16 +1,28 @@
 type content =
-  | File of string
+  | File of string option * string
   | Plain of string
 
 let pp_content fmt content =
   match content with
   | Plain text -> Fmt.pf fmt "%s" text
-  | File path -> Fmt.pf fmt "%s" path
+  | File (name, path) -> (
+      match name with
+      | Some name -> Fmt.pf fmt "%s (%s)" name path
+      | None -> Fmt.pf fmt "%s" path )
 
 let content_to_yojson content =
   match content with
   | Plain text -> `Assoc [ ("type", `String "Plain"); ("value", `String text) ]
-  | File path -> `Assoc [ ("type", `String "File"); ("path", `String path) ]
+  | File (name, path) -> (
+      match name with
+      | Some name ->
+          `Assoc
+            [
+              ("type", `String "File");
+              ("path", `String path);
+              ("name", `String name);
+            ]
+      | None -> `Assoc [ ("type", `String "File"); ("path", `String path) ] )
 
 let content_of_yojson content =
   let open Yojson.Safe.Util in
@@ -21,7 +33,8 @@ let content_of_yojson content =
       Ok (Plain value)
   | "File" ->
       let path = member "path" content |> to_string in
-      Ok (File path)
+      let name = member "name" content |> to_string_option in
+      Ok (File (name, path))
   | _ -> Error "Invalid card content"
 
 type t = {
@@ -45,7 +58,7 @@ end
 
 let create id ?(deck = Deck.default_id) content last_reviewed_at =
   match content with
-  | Plain text | File text ->
+  | Plain text | File (_, text) ->
       if text = "" then
         Error "content cannot be empty"
       else
@@ -59,7 +72,8 @@ let generate_id content =
 let title card =
   match card.content with
   | Plain text -> Base.(String.split_lines text |> List.hd_exn)
-  | File path -> Filename.basename path
+  | File (name, path) -> (
+      match name with Some name -> name | None -> Filename.basename path )
 
 module Rating = struct
   type t =

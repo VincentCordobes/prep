@@ -31,9 +31,15 @@ let%expect_test "List empty default boxes" =
 
 let%expect_test "Add a file card" =
   (* when *)
-  Cli.add_file "./knocking on heaven door";
+  Cli.add_file None "./knocking on heaven door";
   (* then *)
   [%expect {|Card added (id: knocking_on_heaven_door)|}]
+
+let%expect_test "Add a file card with alias" =
+  (* when *)
+  Cli.add_file (Some "greenday") "./toto";
+  (* then *)
+  [%expect {|Card added (id: greenday)|}]
 
 let%expect_test "Add a card" =
   drop_store ();
@@ -486,7 +492,7 @@ let%expect_test "Decks" =
   |}];
 
   (* when adding a card *)
-  Cli.add_file "./dilaudid";
+  Cli.add_file None "./dilaudid";
   [%expect.output] |> ignore;
   Cli.list_decks ();
   Cli.list_boxes ();
@@ -521,7 +527,7 @@ let%expect_test "Decks" =
     No card. |}];
 
   (* when adding a card to the current deck *)
-  Cli.add_file "./vince";
+  Cli.add_file None "./vince";
   [%expect.output] |> ignore;
   Cli.list_decks ();
   (* then *)

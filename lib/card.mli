@@ -1,5 +1,5 @@
 type content =
-  | File of string
+  | File of string option * string
   | Plain of string
 
 type t = {
