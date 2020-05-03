@@ -14,15 +14,7 @@ let edit text =
   Out_channel.close outc;
 
   let candidates =
-    match Caml.Sys.getenv_opt "VISUAL" with
-    | Some x -> [ x ]
-    | None -> (
-        match Caml.Sys.getenv_opt "EDITOR" with
-        | Some x -> [ x ]
-        | None -> (
-            match Caml.Sys.getenv_opt "PAGER" with
-            | Some x -> [ x ]
-            | None -> [] ) )
+    match Caml.Sys.getenv_opt "EDITOR" with Some x -> [ x ] | None -> []
   in
   let is_vim =
     List.exists candidates ~f:(fun candidate ->

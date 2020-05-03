@@ -83,13 +83,6 @@ module Rating = struct
     | Easy
   [@@deriving show]
 
-  let from_int = function
-    | 0 -> Ok Bad
-    | 1 -> Ok Again
-    | 2 -> Ok Good
-    | 3 -> Ok Easy
-    | _ -> Error "Rating must be in the range [0 - 3]"
-
   let of_string rating_str =
     match rating_str with
     | "bad" -> Ok Bad

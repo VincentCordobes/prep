@@ -33,6 +33,7 @@ let equals a b =
   | Week m, Day n -> m = n
   | _ -> false
 
+(** [of_string raw] parses a [raw] string to an interval *)
 let of_string str =
   let regex = Str.regexp {|\([0-9]+\)\(d\|w\)$|} in
   match Str.string_match regex str 0 with

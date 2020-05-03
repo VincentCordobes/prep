@@ -130,9 +130,9 @@ let list_decks () =
       in
       List.iter store.decks ~f:(fun deck -> print_deck deck.id)
 
-let add_deck name parent =
+let add_deck name =
   Store.load ()
-  |> Store.add_deck (Deck.create ~id:name ~deck_id:parent ())
+  |> Store.add_deck (Deck.create ~id:name ~decks:[] ())
   |> Store.save
 
 let rec use_deck ~input_char name =
@@ -274,13 +274,7 @@ let add_deck_cmd =
       |> pos ~rev:true 0 (some string) None
       |> required)
   in
-  let parent_arg =
-    Arg.(
-      info [ "p"; "parent" ] ~docv:"parent" ~doc:"parent deck"
-      |> opt (some string) None
-      |> value)
-  in
-  let action = Term.(const add_deck $ name_arg $ parent_arg) in
+  let action = Term.(const add_deck $ name_arg) in
   let info = Term.info "add-deck" in
   (action, info)
 

@@ -483,7 +483,7 @@ let%expect_test "Decks" =
   |}];
 
   (* when adding a new deck*)
-  Cli.add_deck "custom_deck" None;
+  Cli.add_deck "custom_deck";
   Cli.list_decks ();
   (* then *)
   [%expect {|
@@ -585,8 +585,8 @@ let%expect_test "use-deck" =
   |}];
 
   (* when adding a deck *)
-  Cli.add_deck "tata" None;
-  Cli.add_deck "titi" None;
+  Cli.add_deck "tata";
+  Cli.add_deck "titi";
   Cli.list_decks ();
   (* then *)
   [%expect {|

@@ -19,9 +19,9 @@ end
 
 val generate_id : string -> string
 
+(** [create id deck content box_id at] creates a new card in the [deck] with an
+    [id] a [name] and a [content] [at] the given time *)
 val create : string -> ?deck:string -> content -> float -> (t, string) result
-(** [create id deck content box_id at] creates a new card in the [deck] 
-    with an [id] a [name] and a [content] [at] the given time *)
 
 val title : t -> string
 
@@ -31,24 +31,14 @@ val content_to_yojson : content -> Yojson.t
 
 val content_of_yojson : Yojson.Safe.t -> (content, string) result
 
+(** Card rating during a practice session *)
 module Rating : sig
-  (** Rating of the card during a practice session:
-      `Bad:   We made some mistakes we have to repeat it again.
-              The card is moved to the first box 
-      `Again: Little mistakes.
-              The card is moved down
-      `Good:  We had to think but we got it right. 
-              The card is graduated.
-      `Easy:  No hesitation, no mistake. 
-              The card is moved into the last box *)
   type t =
-    | Bad
-    | Again
-    | Good
-    | Easy
+    | Bad  (** The card is moved to the first box *)
+    | Again  (** The card is not moved *)
+    | Good  (** The card is graduated to the next box *)
+    | Easy  (** The card is moved into the last box *)
   [@@deriving show]
-
-  val from_int : int -> (t, string) result
 
   val of_string : string -> (t, string) result
 
