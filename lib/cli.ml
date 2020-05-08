@@ -213,59 +213,12 @@ let move_card ~at card_id box_id =
   let store = Store.load () in
   Store.move_card_to at (box_id - 1) card_id store |> Store.save
 
-let move_down ~at card_id =
-  let store = Store.load () in
-  let card = Store.find_card_exn card_id store in
-  Store.move_card_to at (card.box - 1) card_id store |> Store.save
-
 let content_arg =
   Arg.(
     info [ "c"; "content" ] ~docv:"CONTENT"
       ~doc:"The content in text of the card"
     |> opt (some string) None
     |> value)
-
-let add_cmd =
-  let now = Unix.time () in
-  let action =
-    Term.(const (add ~last_reviewed_at:now ~retry:false) $ content_arg)
-  in
-  let info = Term.info "add" ~exits:Term.default_exits in
-  (action, info)
-
-let add_file_cmd =
-  let now = Unix.time () in
-  let path_arg =
-    Arg.(
-      info [] ~docv:"PATH" ~doc:"path of the card"
-      |> pos ~rev:true 0 (some file) None
-      |> required)
-  in
-
-  let name_arg =
-    Arg.(
-      info [ "n"; "name" ] ~docv:"NAME" ~doc:"Name of the card"
-      |> opt (some string) None
-      |> value)
-  in
-  let action =
-    Term.(const (add_file ~last_reviewed_at:now) $ name_arg $ path_arg)
-  in
-  let info = Term.info "add-file" ~exits:Term.default_exits in
-  (action, info)
-
-let add_box_cmd =
-  let interval = (Interval.of_string, fun ppf -> Fmt.pf ppf "%a" Interval.pp) in
-  let interval_arg =
-    Arg.(
-      info [ "f"; "interval" ] ~docv:"interval"
-        ~doc:"interval in days or weeks of the box"
-      |> opt (some interval) None
-      |> required)
-  in
-  let action = Term.(const add_box $ interval_arg) in
-  let info = Term.info "add-box" in
-  (action, info)
 
 let add_deck_cmd =
   let name_arg =
@@ -278,50 +231,17 @@ let add_deck_cmd =
   let info = Term.info "add-deck" in
   (action, info)
 
-let list_boxes_cmd = (Term.(const list_boxes $ const ()), Term.info "list-boxes")
-
-let list_decks_cmd = (Term.(const list_decks $ const ()), Term.info "decks")
-
 let complete_ids () =
   let store = Store.load () in
   let cards = store.cards in
   List.iter cards ~f:(fun card -> Fmt.pr "%s " Card.(card.id));
   Fmt.pr "@."
 
-let complete_ids_cmd =
-  let action = Term.(const complete_ids $ const ()) in
-  let info = Term.info "complete-ids" in
-  (action, info)
-
 let card_id_arg =
   Arg.(
     info [] ~docv:"ID" ~doc:"Id of the card"
     |> pos ~rev:true 0 (some string) None
     |> required)
-
-let show_card_cmd = (Term.(const show_card $ card_id_arg), Term.info "show")
-
-let edit_cmd = (Term.(const (edit Editor.edit) $ card_id_arg), Term.info "edit")
-
-let remove_cmd =
-  let input_char () = Stdio.(In_channel.input_char Caml.stdin) in
-  let action = Term.(const (remove input_char) $ card_id_arg) in
-  let info = Term.info "remove" in
-  (action, info)
-
-let move_card_cmd =
-  let now = Unix.time () in
-  let box_id_arg =
-    Arg.(
-      info [] ~docv:"BOX_ID" ~doc:"Id of the box"
-      |> pos ~rev:true 0 (some int) None
-      |> required)
-  in
-  (Term.(const (move_card ~at:now) $ card_id_arg $ box_id_arg), Term.info "move")
-
-let move_down_cmd =
-  let now = Unix.time () in
-  (Term.(const (move_down ~at:now) $ card_id_arg), Term.info "move-down")
 
 let rate ~at (rating : Card.Rating.t) card_id =
   let open Card.Rating in
@@ -342,27 +262,6 @@ let rate ~at (rating : Card.Rating.t) card_id =
   @@ String.lowercase
   @@ Card.Rating.to_string rating
 
-let rate_cmd =
-  let rating =
-    let parse value =
-      match Card.Rating.of_string value with
-      | Ok r -> `Ok r
-      | Error msg -> `Error msg
-    in
-    let pp ppf = Fmt.pf ppf "%a" Card.Rating.pp in
-    (parse, pp)
-  in
-  let rating_arg =
-    Arg.(
-      info [] ~docv:"RATING" ~doc:"Rating value"
-      |> pos 0 (some rating) None
-      |> required)
-  in
-  let now = Unix.time () in
-  let action = Term.(const (rate ~at:now) $ rating_arg $ card_id_arg) in
-  let info = Term.info "rate" in
-  (action, info)
-
 let review now =
   let open Box in
   let store = Store.load () in
@@ -371,19 +270,3 @@ let review now =
     Float.(next_review box.interval card <= now)
   in
   List.filter store.cards ~f:should_review |> print_cards
-
-let review_cmd =
-  let now = Unix.time () in
-  (Term.(const review $ const now), Term.info "review")
-
-let use_deck_cmd =
-  let name_arg =
-    Arg.(
-      info [] ~docv:"name" ~doc:"deck name"
-      |> pos ~rev:true 0 (some string) None
-      |> required)
-  in
-  let input_char () = Stdio.(In_channel.input_char Caml.stdin) in
-  let action = Term.(const (use_deck ~input_char) $ name_arg) in
-  let info = Term.info "use-deck" in
-  (action, info)
