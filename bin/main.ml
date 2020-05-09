@@ -73,9 +73,8 @@ let add_file_cmd =
       |> opt (some string) None
       |> value)
   in
-  let action =
-    Term.(const (add_file ~last_reviewed_at:now) $ name_arg $ path_arg)
-  in
+  let add_file name path = add_file ~last_reviewed_at:now ~name path in
+  let action = Term.(const add_file $ name_arg $ path_arg) in
   let info =
     Term.info "add-file" ~doc:"Add a card of type file"
       ~sdocs:Manpage.s_common_options ~exits:Term.default_exits
@@ -165,7 +164,16 @@ let review_cmd =
       ~sdocs:Manpage.s_common_options )
 
 let show_card_cmd =
-  ( Term.(const show_card $ card_id_arg),
+  let with_editor_arg =
+    let doc =
+      "Show the card content using the editor specified by VISUAL or EDITOR \
+       environment variables."
+    in
+    Arg.info [ "e"; "edit" ] ~doc |> Arg.flag |> Arg.value
+  in
+
+  let show_card id with_editor = show_card ~with_editor id in
+  ( Term.(const show_card $ card_id_arg $ with_editor_arg),
     Term.info "show" ~doc:"Show a card" ~sdocs:Manpage.s_common_options )
 
 let () =

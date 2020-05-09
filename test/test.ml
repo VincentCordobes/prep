@@ -31,13 +31,13 @@ let%expect_test "List empty default boxes" =
 
 let%expect_test "Add a file card" =
   (* when *)
-  Cli.add_file None "./knocking on heaven door";
+  Cli.add_file "./knocking on heaven door";
   (* then *)
   [%expect {|Card added (id: knocking_on_heaven_door)|}]
 
 let%expect_test "Add a file card with alias" =
   (* when *)
-  Cli.add_file (Some "greenday") "./toto";
+  Cli.add_file ~name:(Some "greenday") "./toto";
   (* then *)
   [%expect {|Card added (id: greenday)|}]
 
@@ -346,7 +346,7 @@ let%expect_test "next review date" =
   rate_card_good "sing";
 
   Cli.list_boxes ();
-  (* Note that there are 29 days in in feb 2020  *)
+  (* Note that there are 29 days in in feb 2020 *)
   [%expect
     {|
     Every 3 days
@@ -492,7 +492,7 @@ let%expect_test "Decks" =
   |}];
 
   (* when adding a card *)
-  Cli.add_file None "./dilaudid";
+  Cli.add_file "./dilaudid";
   [%expect.output] |> ignore;
   Cli.list_decks ();
   Cli.list_boxes ();
@@ -527,7 +527,7 @@ let%expect_test "Decks" =
     No card. |}];
 
   (* when adding a card to the current deck *)
-  Cli.add_file None "./vince";
+  Cli.add_file "./vince";
   [%expect.output] |> ignore;
   Cli.list_decks ();
   (* then *)

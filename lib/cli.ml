@@ -22,7 +22,7 @@ let rec add ?(last_reviewed_at = Unix.time ()) ?(retry = false) content =
         Fmt.pr "Card added (id: %s)\n" card.id
     | Error msg -> failwith msg
 
-let add_file name ?(last_reviewed_at = Unix.time ()) file =
+let add_file ?(name = None) ?(last_reviewed_at = Unix.time ()) file =
   let open Caml in
   let store = Store.load () in
   let id =
@@ -151,19 +151,32 @@ let rec use_deck ~input_char name =
           use_deck ~input_char name
       | _ -> Fmt.pr "Aborted!@." )
 
-let show_file_content path =
+let show_file_content ?(with_editor = false) path =
   let filetype = Caml.Filename.extension path in
-  let can_open_with_editor =
+  let plainTextCard =
     List.exists [ ".md"; ".txt"; "" ] ~f:(fun extension ->
         String.(extension = filetype))
   in
-  let candidates =
-    if can_open_with_editor then
-      match Caml.Sys.getenv_opt "EDITOR" with Some x -> [ x ] | None -> []
+  let plainTextApp =
+    if plainTextCard || with_editor then
+      match Caml.Sys.getenv_opt "VISUAL" with
+      | Some x -> [ x ]
+      | None -> (
+          match Caml.Sys.getenv_opt "EDITOR" with
+          | Some x -> [ x ]
+          | None -> (
+              match Caml.Sys.getenv_opt "PAGER" with
+              | Some x -> [ x ]
+              | None -> [] ) )
     else
       []
   in
-  let candidates = candidates @ [ "open"; "xdg-open" ] in
+  let candidates =
+    if with_editor then
+      plainTextApp
+    else
+      plainTextApp @ [ "open"; "xdg-open" ]
+  in
   List.exists
     ~f:(fun bin ->
       Caml.Sys.command (bin ^ " " ^ Caml.Filename.quote path ^ " 2> /dev/null")
@@ -171,12 +184,12 @@ let show_file_content path =
     candidates
   |> ignore
 
-let show_card id =
+let show_card ?(with_editor = false) id =
   let store = Store.load () in
   let card = Store.find_card_exn id store in
   match card.content with
   | Plain text -> Fmt.pr "%s\n" text
-  | File (_, path) -> show_file_content path
+  | File (_, path) -> show_file_content ~with_editor path
 
 let edit open_in_editor card_id =
   let store = Store.load () in
