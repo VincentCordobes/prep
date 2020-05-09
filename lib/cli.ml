@@ -279,7 +279,10 @@ let review now =
   let open Box in
   let store = Store.load () in
   let should_review (card : Card.t) =
-    let box = List.nth_exn (Store.get_boxes store) card.box in
-    Float.(next_review box.interval card <= now)
+    if String.(card.deck = store.current_deck) then
+      let box = List.nth_exn (Store.get_boxes store) card.box in
+      Float.(next_review box.interval card <= now)
+    else
+      false
   in
   List.filter store.cards ~f:should_review |> print_cards

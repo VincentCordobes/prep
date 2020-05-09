@@ -494,13 +494,14 @@ let%expect_test "Decks" =
   (* when adding a card *)
   Cli.add_file "./dilaudid";
   [%expect.output] |> ignore;
+  (* then deck are unchanged *)
   Cli.list_decks ();
-  Cli.list_boxes ();
-  (* then it's added to the default deck *)
-  [%expect
-    {|
+  [%expect {|
     * default
-      custom_deck
+      custom_deck |}];
+  Cli.list_boxes ();
+  (* and it's added to the default deck *)
+  [%expect {|
     Every 3 days
     \* dilaudid (.*) (regexp)
     Every 1 week
@@ -509,6 +510,11 @@ let%expect_test "Decks" =
     No card.
     Every 6 weeks
     No card. |}];
+
+  (* when reviewing a deck *)
+  Cli.review (date "2022-04-05");
+  (* then it should only display current deck cards *)
+  [%expect {| * dilaudid (box #1) |}];
 
   (* when switching the current deck*)
   Cli.use_deck ~input_char:(fun _ -> None) "custom_deck";
@@ -526,20 +532,16 @@ let%expect_test "Decks" =
     Every 6 weeks
     No card. |}];
 
+  (* when reviewing a deck *)
+  Cli.review (date "2022-04-05");
+  (* then it should only review the card of the current deck *)
+  [%expect {| No card. |}];
+
   (* when adding a card to the current deck *)
   Cli.add_file "./vince";
   [%expect.output] |> ignore;
-  Cli.list_decks ();
-  (* then *)
-  [%expect {|
-       default
-     * custom_deck
-   |}];
-
-  (* when listing cards *)
+  (* then it shows that card in boxes *)
   Cli.list_boxes ();
-
-  (* then it should not mix decks *)
   [%expect
     {|
     Every 3 days
@@ -549,7 +551,13 @@ let%expect_test "Decks" =
     Every 8 days
     No card.
     Every 6 weeks
-    No card. |}]
+    No card. |}];
+  Cli.review (date "2022-04-05");
+  (* and it reviews only that card  *)
+  [%expect {| * vince (box #1) |}]
+
+
+
 
 let%expect_test "use-deck" =
   drop_store ();
@@ -595,3 +603,4 @@ let%expect_test "use-deck" =
       tata
       titi
   |}]
+
