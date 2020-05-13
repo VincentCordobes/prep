@@ -25,8 +25,9 @@ let save store =
   let boxes_json = to_yojson store in
   Yojson.Safe.to_file store_path boxes_json
 
-let get_boxes store =
-  match List.find store.decks ~f:(fun d -> d.id = store.current_deck) with
+let get_boxes ?deck store =
+  let deck = match deck with Some deck -> deck | None -> store.current_deck in
+  match List.find store.decks ~f:(fun d -> d.id = deck) with
   | Some deck -> deck.boxes
   | None -> []
 

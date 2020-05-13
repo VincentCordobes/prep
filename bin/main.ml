@@ -159,9 +159,19 @@ let remove_cmd =
 
 let review_cmd =
   let now = Unix.time () in
-  ( Term.(const review $ const now),
+  let deck_arg =
+    Arg.info [] ~doc:"Deck name"
+    |> Arg.pos ~rev:true 0 Arg.(some string) None
+    |> Arg.value
+  in
+
+  let review deck = review ~deck now in
+  let action = Term.(const review $ deck_arg) in
+  let info =
     Term.info "review" ~doc:"List cards to be reviewed"
-      ~sdocs:Manpage.s_common_options )
+      ~sdocs:Manpage.s_common_options
+  in
+  (action, info)
 
 let show_card_cmd =
   let with_editor_arg =

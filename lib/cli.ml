@@ -275,12 +275,15 @@ let rate ~at (rating : Card.Rating.t) card_id =
   @@ String.lowercase
   @@ Card.Rating.to_string rating
 
-let review now =
+let review ?(deck=None) now =
   let open Box in
   let store = Store.load () in
+  let deck =
+    match deck with Some deck -> deck | None -> store.current_deck
+  in
   let should_review (card : Card.t) =
-    if String.(card.deck = store.current_deck) then
-      let box = List.nth_exn (Store.get_boxes store) card.box in
+    if String.(card.deck = deck) then
+      let box = List.nth_exn (Store.get_boxes ~deck store) card.box in
       Float.(next_review box.interval card <= now)
     else
       false
