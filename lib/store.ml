@@ -117,7 +117,7 @@ let exists ?(exact = false) card_id store =
 
 let move_card_to date to_box card_id store =
   let card = find_card_exn card_id store in
-  let boxes_count = get_boxes store |> List.length in
+  let boxes_count = get_boxes ~deck:card.deck store |> List.length in
   let box_exists = to_box >= 0 && to_box < boxes_count in
   let set_card_box to_box =
     set_card card.id { card with box = to_box; last_reviewed_at = date } store
