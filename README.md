@@ -15,7 +15,6 @@ Too often, once we've learned something, we take it for granted, we don't bother
 The key to improve long-term memorization is to **distribute practice session over time**. That technique is called _spaced repetition_. Prep is there to help you manage everything you want to learn. 
 
 The principle is simple. We have cards put into ~~platic~~ boxes.
-
 A card is an item you want to learn/practice. It could be anything—from a plain plain text file to a video, a PDF, a song and so one. 
 
 Boxes are associated with a time interval—duration between each practice session. 
