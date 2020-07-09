@@ -56,7 +56,7 @@ let%expect_test "Add a card" =
   [%expect
     {|
     Every 3 days
-    \* Blink182 - All the small things (.*) (regexp)
+    2020-07-12 Blink182 - All the small things
     Every 1 week
     No card.
     Every 8 days
@@ -73,7 +73,7 @@ let%expect_test "Card Rating" =
   [%expect
     {|
     Every 3 days
-    \* Blink182 - All the small things (.*) (regexp)
+    2020-03-01 Blink182 - All the small things
     Every 1 week
     No card.
     Every 8 days
@@ -92,7 +92,7 @@ let%expect_test "Card Rating" =
   [%expect
     {|
     Every 3 days
-    * Blink182 - All the small things (last 2020-01-01, next 2020-01-04)
+    2020-01-04 Blink182 - All the small things
     Every 1 week
     No card.
     Every 8 days
@@ -111,7 +111,7 @@ let%expect_test "Card Rating" =
     Every 3 days
     No card.
     Every 1 week
-    \* Blink182 - All the small things (.*) (regexp)
+    2020-03-05 Blink182 - All the small things
     Every 8 days
     No card.
     Every 6 weeks
@@ -127,7 +127,7 @@ let%expect_test "Card Rating" =
     Every 3 days
     No card.
     Every 1 week
-    \* Blink182 - All the small things (.*) (regexp)
+    2020-03-05 Blink182 - All the small things
     Every 8 days
     No card.
     Every 6 weeks
@@ -149,7 +149,7 @@ let%expect_test "Card Rating" =
     Every 8 days
     No card.
     Every 6 weeks
-    \* Blink182 - All the small things (.*) (regexp)
+    2020-04-09 Blink182 - All the small things
   |}];
 
   (* when *)
@@ -169,7 +169,7 @@ let%expect_test "Card Rating" =
     Every 8 days
     No card.
     Every 6 weeks
-    \* Blink182 - All the small things (.*) (regexp)
+    2020-04-09 Blink182 - All the small things
   |}]
 
 let%expect_test "Show a card" =
@@ -249,7 +249,7 @@ let%expect_test "Handle duplicate boxes" =
     Every 8 days
     No card.
     Every 6 weeks
-    \* Blink182 - All the small things (.*) (regexp)
+    2020-04-09 Blink182 - All the small things
     Every 400 days
     No card.
   |}]
@@ -273,7 +273,7 @@ let%expect_test "Edit card content" =
     Every 8 days
     No card.
     Every 6 weeks
-    \* yoo (.*) (regexp)
+    2020-04-09 yoo
     Every 400 days
     No card.
   |}];
@@ -302,7 +302,7 @@ let%expect_test "Remove a card - abort" =
     Every 8 days
     No card.
     Every 6 weeks
-    \* yoo (.*) (regexp)
+    2020-04-09 yoo
     Every 400 days
     No card.
   |}]
@@ -350,9 +350,9 @@ let%expect_test "next review date" =
   [%expect
     {|
     Every 3 days
-    * song (last 2020-02-27, next 2020-03-01) 
+    2020-03-01 song
     Every 1 week
-    * sing (last 2020-02-27, next 2020-03-05)
+    2020-03-05 sing
     Every 8 days
     No card.
     Every 6 weeks
@@ -366,11 +366,11 @@ let%expect_test "next review date" =
   [%expect
     {|
     Every 3 days
-    * song (last 2020-02-27, next 2020-03-01)
+    2020-03-01 song
     Every 1 week
     No card.
     Every 8 days
-    * sing (last 2020-02-27, next 2020-03-06)
+    2020-03-06 sing
     Every 6 weeks
     No card.
     Every 400 days
@@ -382,13 +382,13 @@ let%expect_test "next review date" =
   [%expect
     {|
     Every 3 days
-    * song (last 2020-02-27, next 2020-03-01)
+    2020-03-01 song
     Every 1 week
     No card.
     Every 8 days
     No card.
     Every 6 weeks
-    * sing (last 2020-02-27, next 2020-04-09)
+    2020-04-09 sing
     Every 400 days
     No card.
   |}]
@@ -429,10 +429,10 @@ let%expect_test "prep review" =
     No card. 
     No card. 
     No card. 
-    * Awesome card (box #1)
-    * Awesome card (box #1)
-    * Awesome card (box #1)
-    * Awesome card (box #1)
+    2020-04-08  #1 Awesome card
+    2020-04-08  #1 Awesome card
+    2020-04-08  #1 Awesome card
+    2020-04-08  #1 Awesome card
   |}]
 
 let%expect_test "Box are sorted by interval" =
@@ -503,7 +503,7 @@ let%expect_test "Decks" =
   (* and it's added to the default deck *)
   [%expect {|
     Every 3 days
-    \* dilaudid (.*) (regexp)
+    2020-07-12 dilaudid
     Every 1 week
     No card.
     Every 8 days
@@ -514,7 +514,7 @@ let%expect_test "Decks" =
   (* when reviewing a deck *)
   Cli.review (date "2022-04-05");
   (* then it should only display current deck cards *)
-  [%expect {| * dilaudid (box #1) |}];
+  [%expect {| 2020-07-12  #1 dilaudid |}];
 
   (* when switching the current deck*)
   Cli.use_deck ~input_char:(fun _ -> None) "custom_deck";
@@ -545,7 +545,7 @@ let%expect_test "Decks" =
   [%expect
     {|
     Every 3 days
-    \* vince (.*) (regexp)
+    2020-07-12 vince
     Every 1 week
     No card.
     Every 8 days
@@ -554,7 +554,7 @@ let%expect_test "Decks" =
     No card. |}];
   Cli.review (date "2022-04-05");
   (* and it reviews only that card  *)
-  [%expect {| * vince (box #1) |}]
+  [%expect {| 2020-07-12  #1 vince |}]
 
 
 

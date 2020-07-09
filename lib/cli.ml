@@ -79,26 +79,69 @@ let next_review (interval : Interval.t) (card : Card.t) =
     in
     date_of_datetime card.last_reviewed_at + interval)
 
+let print_cards_to_review store cards =
+  let open Card in
+  let grouped_cards =
+    cards
+    |> List.map ~f:(fun card ->
+           let box = Store.get_box card store in
+           let date = Float.to_int (next_review box.interval card) in
+           (date, card))
+    |> List.sort ~compare:(fun (date_a, _) (date_b, _) -> date_a - date_b)
+    |> List.group ~break:(fun (date_a, _) (date_b, _) -> date_a <> date_b)
+    |> List.map ~f:(fun group ->
+           let cards = List.map group ~f:(fun (_, card) -> card) in
+           let date, _ = List.hd_exn group in
+           (date, cards))
+  in
+
+  let pp_box ppf card = Fmt.pf ppf "#%d" (card.box + 1) in
+
+  let pp_cards ppf cards =
+    cards
+    |> List.iteri ~f:(fun i card ->
+           let indent = if i = 0 then "  " else "            " in
+           Fmt.pf ppf "%s%a %s@." indent
+             (Fmt.styled `Green pp_box)
+             card (title card))
+  in
+
+  let pp_group pp_cards ppf (date, cards) =
+    let date = date |> Int.to_float in
+    let is_today =
+      let date = Unix.localtime date in
+      let now = Unix.localtime (Unix.time ()) in
+      date.tm_year = now.tm_year && date.tm_yday = now.tm_yday
+    in
+    let color = if is_today then `Yellow else `Faint in
+    Fmt.pf ppf "%a%a"
+      (Fmt.styled color ISO8601.Permissive.pp_date)
+      date pp_cards cards
+  in
+
+  if List.length cards > 0 then
+    grouped_cards
+    |> List.iteri ~f:(fun _ card_group ->
+           (* if i <> 0 then Fmt.pr "\n"; *)
+           Fmt.pr "%a" (pp_group pp_cards) card_group)
+  else
+    Fmt.pr "No card.\n"
+
 let print_cards ?interval cards =
   let open Card in
   let open ISO8601.Permissive in
   let open Fmt in
-  let grey = styled `Faint string in
-
   let pp_content ppf card =
     match interval with
-    | None -> pf ppf "%a #%d" grey "box" (card.box + 1)
-    | Some interval ->
-        pf ppf "%a %a%a %a" grey "last" pp_date card.last_reviewed_at grey
-          ", next" pp_date
-          (next_review interval card)
+    | None -> pf ppf "Box #%d" (card.box + 1)
+    | Some interval -> pf ppf "%a" pp_date (next_review interval card)
   in
-  let pp_last_reviewed ppf card =
-    pf ppf "%a%a%a" grey "(" pp_content card grey ")"
-  in
+  let pp_last_reviewed ppf card = pf ppf "%a" pp_content card in
   if List.length cards > 0 then
-    List.iter cards ~f:(fun card ->
-        pr "* %a %a@." Console.yellow_s (title card) pp_last_reviewed card)
+    cards
+    |> List.sort ~compare:(fun a b -> a.box - b.box)
+    |> List.iter ~f:(fun card ->
+           pr "%a %s@." (styled `Faint pp_last_reviewed) card (title card))
   else
     Fmt.pr "No card.\n"
 
@@ -275,12 +318,10 @@ let rate ~at (rating : Card.Rating.t) card_id =
   @@ String.lowercase
   @@ Card.Rating.to_string rating
 
-let review ?(deck=None) now =
+let review ?(deck = None) now =
   let open Box in
   let store = Store.load () in
-  let deck =
-    match deck with Some deck -> deck | None -> store.current_deck
-  in
+  let deck = match deck with Some deck -> deck | None -> store.current_deck in
   let should_review (card : Card.t) =
     if String.(card.deck = deck) then
       let box = List.nth_exn (Store.get_boxes ~deck store) card.box in
@@ -288,4 +329,4 @@ let review ?(deck=None) now =
     else
       false
   in
-  List.filter store.cards ~f:should_review |> print_cards
+  List.filter store.cards ~f:should_review |> print_cards_to_review store
