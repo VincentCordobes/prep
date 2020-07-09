@@ -399,40 +399,55 @@ let%expect_test "prep review" =
   [%expect.output] |> ignore;
 
   (* given *)
-  let card =
-    Card.
-      {
-        id = "awesome_card";
-        content = Plain "Awesome card";
-        box = 0;
-        deck = Deck.default_id;
-        last_reviewed_at = datetime "2020-04-05T11:00:00";
-      }
-  in
   let store =
     Store.empty_store ()
     |> Store.add_box @@ Box.create @@ Day 3
-    |> Store.add card
+    |> Store.add
+         {
+           id = "first";
+           content = Plain "first card";
+           box = 0;
+           deck = Deck.default_id;
+           last_reviewed_at = datetime "2020-04-05T11:00:00";
+         }
   in
   Store.init ~store ();
-  (* when *)
+  Cli.review (date "2020-04-04");
+  [%expect {|
+    2020-04-04  --
+    2020-04-08  #1 first card
+  |}];
   Cli.review (date "2020-04-05");
+  [%expect {|
+    2020-04-05  --
+    2020-04-08  #1 first card
+  |}];
   Cli.review (date "2020-04-06");
+  [%expect {|
+    2020-04-06  --
+    2020-04-08  #1 first card
+  |}];
   Cli.review (date "2020-04-07");
+  [%expect {|
+    2020-04-07  --
+    2020-04-08  #1 first card
+  |}];
   Cli.review (datetime "2020-04-08T00:00");
+  [%expect {|
+    2020-04-08  #1 first card
+  |}];
   Cli.review (datetime "2020-04-08T10:00");
+  [%expect {|
+    2020-04-08  #1 first card
+  |}];
   Cli.review (datetime "2020-04-08T12:00");
+  [%expect {|
+    2020-04-08  #1 first card
+  |}];
   Cli.review (date "2020-04-09");
-  (* then *)
-  [%expect
-    {| 
-    No card. 
-    No card. 
-    No card. 
-    2020-04-08  #1 Awesome card
-    2020-04-08  #1 Awesome card
-    2020-04-08  #1 Awesome card
-    2020-04-08  #1 Awesome card
+  [%expect {|
+    2020-04-08  #1 first card
+    2020-04-09  --
   |}]
 
 let%expect_test "Box are sorted by interval" =
@@ -501,7 +516,8 @@ let%expect_test "Decks" =
       custom_deck |}];
   Cli.list_boxes ();
   (* and it's added to the default deck *)
-  [%expect {|
+  [%expect
+    {|
     Every 3 days
     2020-07-12 dilaudid
     Every 1 week
@@ -514,7 +530,9 @@ let%expect_test "Decks" =
   (* when reviewing a deck *)
   Cli.review (date "2022-04-05");
   (* then it should only display current deck cards *)
-  [%expect {| 2020-07-12  #1 dilaudid |}];
+  [%expect {|
+    2020-07-12  #1 dilaudid
+    2022-04-05  -- |}];
 
   (* when switching the current deck*)
   Cli.use_deck ~input_char:(fun _ -> None) "custom_deck";
@@ -553,11 +571,10 @@ let%expect_test "Decks" =
     Every 6 weeks
     No card. |}];
   Cli.review (date "2022-04-05");
-  (* and it reviews only that card  *)
-  [%expect {| 2020-07-12  #1 vince |}]
-
-
-
+  (* and it reviews only that card *)
+  [%expect {|
+    2020-07-12  #1 vince
+    2022-04-05  -- |}]
 
 let%expect_test "use-deck" =
   drop_store ();
@@ -603,4 +620,3 @@ let%expect_test "use-deck" =
       tata
       titi
   |}]
-

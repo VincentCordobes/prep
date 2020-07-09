@@ -34,6 +34,10 @@ let get_boxes ?deck store =
 let get_box (card : Card.t) store =
   List.nth_exn (get_boxes ~deck:card.deck store) card.box
 
+let get_cards ?deck store =
+  let deck = match deck with Some deck -> deck | None -> store.current_deck in
+  List.filter store.cards ~f:(fun card -> card.deck = deck)
+
 let add_box box store =
   let decks =
     match store.decks with
