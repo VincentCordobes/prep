@@ -43,6 +43,7 @@ type t = {
   box : int;
   deck : string; [@default Deck.default_id]
   last_reviewed_at : float;
+  archived : bool; [@default false]
 }
 [@@deriving show, yojson]
 
@@ -62,7 +63,7 @@ let create id ?(deck = Deck.default_id) content last_reviewed_at =
       if text = "" then
         Error "content cannot be empty"
       else
-        Ok { id; content; box = 0; last_reviewed_at; deck }
+        Ok { id; content; box = 0; last_reviewed_at; deck; archived = false }
 
 let generate_id content =
   let open Base in

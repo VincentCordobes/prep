@@ -158,7 +158,7 @@ let print_cards_to_review now store cards =
   else
     Fmt.pr "No card.\n"
 
-let print_cards ?interval cards =
+let pp_cards ?interval ppf cards =
   let open Card in
   let open ISO8601.Permissive in
   let open Fmt in
@@ -168,16 +168,21 @@ let print_cards ?interval cards =
     | Some interval -> pf ppf "%a" pp_date (next_review interval card)
   in
   let pp_last_reviewed ppf card = pf ppf "%a" pp_content card in
+
   if List.length cards > 0 then
     cards
-    |> List.sort ~compare:(fun a b -> a.box - b.box)
+    |> List.sort ~compare:(fun a b -> if a.archived then 1 else a.box - b.box)
     |> List.iter ~f:(fun card ->
-           pr "%a %s@." (styled `Faint pp_last_reviewed) card (title card))
+           if card.archived then
+             pf ppf "%a %s@." (styled `Red string) "[archived]" (title card)
+           else
+             pf ppf "%a %s@." (styled `Faint pp_last_reviewed) card (title card))
   else
-    Fmt.pr "No card.\n"
+    Fmt.pf ppf "No card.\n"
 
 let list_boxes () =
   let store = Store.load () in
+
   let print_box box_id box =
     let interval = Box.(box.interval) in
     let cards =
@@ -186,8 +191,19 @@ let list_boxes () =
           card.box = box_id && String.(card.deck = store.current_deck))
         store.cards
     in
-    Fmt.pr "Every %a\n" Console.green_s (Interval.to_string interval);
-    print_cards ~interval cards
+
+    let pp_box_id ppf box_id =
+      Fmt.pf ppf "%a" Fmt.(styled `Green string) ("#" ^ Int.to_string box_id)
+    in
+
+    let pp_heading ppf box_id =
+      let line_before = if box_id = 0 then "" else "\n" in
+      Fmt.pf ppf "%s%a Every %s\n" line_before pp_box_id box_id
+        (Interval.to_string interval)
+    in
+
+    Fmt.pr "%a" pp_heading box_id;
+    Fmt.pr "%a" (pp_cards ~interval) cards
   in
   List.iteri ~f:print_box (Store.get_boxes store)
 
@@ -296,6 +312,18 @@ let remove input_char card_id =
       Fmt.pr "Card removed.@."
   | _ -> Fmt.pr "Aborted!@."
 
+let archive card_id =
+  let store = Store.load () in
+  let card = Store.find_card_exn card_id store in
+  Store.set_card card.id { card with archived = true } store |> Store.save;
+  Fmt.pr "Card Archived.@."
+
+let unarchive card_id =
+  let store = Store.load () in
+  let card = Store.find_card_exn card_id store in
+  Store.set_card card.id { card with archived = false } store |> Store.save;
+  Fmt.pr "Card unarchived.@."
+
 let move_card ~at card_id box_id =
   let store = Store.load () in
   Store.move_card_to at (box_id - 1) card_id store |> Store.save
@@ -361,4 +389,6 @@ let review ?(deck = None) now =
     else
       false
   in
-  store |> Store.get_cards ~deck |> print_cards_to_review now store
+  store |> Store.get_cards ~deck
+  |> List.filter ~f:(fun card -> not Card.(card.archived))
+  |> print_cards_to_review now store

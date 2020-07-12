@@ -111,8 +111,7 @@ let edit_cmd =
 
 let list_boxes_cmd =
   ( Term.(const list_boxes $ const ()),
-    Term.info "list-boxes" ~doc:"List all boxes" ~sdocs:Manpage.s_common_options
-  )
+    Term.info "boxes" ~doc:"List all boxes" ~sdocs:Manpage.s_common_options )
 
 let move_card_cmd =
   let now = Unix.time () in
@@ -186,6 +185,21 @@ let show_card_cmd =
   ( Term.(const show_card $ card_id_arg $ with_editor_arg),
     Term.info "show" ~doc:"Show a card" ~sdocs:Manpage.s_common_options )
 
+let archive_card_cmd =
+  let action = Term.(const archive $ card_id_arg) in
+  let info =
+    Term.info "archive" ~doc:"Archive a card" ~sdocs:Manpage.s_common_options
+  in
+  (action, info)
+
+let unarchive_card_cmd =
+  let action = Term.(const unarchive $ card_id_arg) in
+  let info =
+    Term.info "unarchive" ~doc:"Unarchive a card"
+      ~sdocs:Manpage.s_common_options
+  in
+  (action, info)
+
 let () =
   Prep.Store.init ();
   Fmt_tty.setup_std_outputs ~style_renderer:`Ansi_tty ();
@@ -202,6 +216,8 @@ let () =
         add_box_cmd;
         edit_cmd;
         remove_cmd;
+        archive_card_cmd;
+        unarchive_card_cmd;
         move_card_cmd;
         rate_cmd;
         review_cmd;

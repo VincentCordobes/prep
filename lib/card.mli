@@ -8,6 +8,7 @@ type t = {
   box : int;
   deck : string;
   last_reviewed_at : float;
+  archived : bool; [@default false]
 }
 [@@deriving show, yojson]
 

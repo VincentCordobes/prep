@@ -24,7 +24,7 @@ _prep() {
 
   case "$COMP_CWORD" in
     1)
-      _gen_comp "add add-file add-box edit list-boxes move-down rate review remove show use-deck decks" "$cur"
+      _gen_comp "add add-file add-box edit boxes move-down rate review remove show use-deck decks archive unarchive" "$cur"
       ;;
 
     2)
@@ -32,7 +32,7 @@ _prep() {
         rate)
           _gen_comp "bad again good easy" "$cur";;
 
-        show | edit | remove | move-down)
+        show | edit | remove | move-down | archive | unarchive)
           _complete_ids "$cur"
       esac;;
 
