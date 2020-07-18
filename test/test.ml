@@ -50,7 +50,8 @@ let%expect_test "Add a card" =
   Store.init ();
 
   (* when *)
-  Cli.add @@ Some {|Blink182 - All the small things
+  Cli.add ~last_reviewed_at:now
+  @@ Some {|Blink182 - All the small things
 
   body|};
   (* then *)
@@ -59,7 +60,7 @@ let%expect_test "Add a card" =
   [%expect
     {|
     #0 Every 3 days
-    2020-07-15 Blink182 - All the small things
+    2020-03-01 Blink182 - All the small things
 
     #1 Every 1 week
     No card.
@@ -565,7 +566,7 @@ let%expect_test "Decks" =
   |}];
 
   (* when adding a card *)
-  Cli.add_file "./dilaudid";
+  Cli.add_file ~last_reviewed_at:now "./dilaudid";
   [%expect.output] |> ignore;
   (* then deck are unchanged *)
   Cli.list_decks ();
@@ -577,7 +578,7 @@ let%expect_test "Decks" =
   [%expect
     {|
     #0 Every 3 days
-    2020-07-15 dilaudid
+    2020-03-01 dilaudid
 
     #1 Every 1 week
     No card.
@@ -592,7 +593,7 @@ let%expect_test "Decks" =
   Cli.review (date "2022-04-05");
   (* then it should only display current deck cards *)
   [%expect {|
-    2020-07-15  #1 dilaudid
+    2020-03-01  #1 dilaudid
     2022-04-05  -- |}];
 
   (* when switching the current deck*)
@@ -620,14 +621,14 @@ let%expect_test "Decks" =
   [%expect {| No card. |}];
 
   (* when adding a card to the current deck *)
-  Cli.add_file "./vince";
+  Cli.add_file ~last_reviewed_at:now "./vince";
   [%expect.output] |> ignore;
   (* then it shows that card in boxes *)
   Cli.list_boxes ();
   [%expect
     {|
     #0 Every 3 days
-    2020-07-15 vince
+    2020-03-01 vince
 
     #1 Every 1 week
     No card.
@@ -640,7 +641,7 @@ let%expect_test "Decks" =
   Cli.review (date "2022-04-05");
   (* and it reviews only that card *)
   [%expect {|
-    2020-07-15  #1 vince
+    2020-03-01  #1 vince
     2022-04-05  -- |}]
 
 let%expect_test "use-deck" =
