@@ -7,12 +7,19 @@
   <strong>Prep is a command line utility to help learn, memorize things. It is based on the spaced repetition learning technique.</strong>
 </p>
 
+<p align="center">
+<img src="https://user-images.githubusercontent.com/7091110/87849761-6e341c00-c8eb-11ea-8067-eadbaf500362.png" alt="screenshot" />
+</p>
+
+## Why ?
+
 We all love to learn new things. Whether it is a language, a song, a musical instrument, a specific topic etc..
 
 The difficulty is not so much to learn those things per se. The difficulty is to memorize them over the long term, to master these things.
 Too often, once we've learned something, we take it for granted, we don't bother to review it, and we forget it. **Too bad, we knew it once!** 
 
-The key to improve long-term memorization is to **distribute practice session over time**. That technique is called _spaced repetition_. Prep is there to help you manage everything you want to learn. 
+The key to improve long-term memorization is to **distribute practice session over time**. That technique is called _spaced repetition_. **prep** is there to help you manage everything you want to learn. 
+
 
 The principle is simple. We have cards put into ~~platic~~ boxes.
 A card is an item you want to learn/practice. It could be anything—from a plain plain text file to a video, a PDF, a song and so one. 
