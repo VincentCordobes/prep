@@ -86,6 +86,13 @@ let complete_ids_cmd =
   let info = Term.info "complete-ids" ~doc:"List all card ids" in
   (action, info)
 
+let zshids_cmd =
+  let action = Term.(const zshids $ const ()) in
+  let info =
+    Term.info "_zshids" ~doc:"Shows the IDs and descriptions of matching tasks"
+  in
+  (action, info)
+
 let use_deck_cmd =
   let name_arg =
     Arg.(
@@ -221,6 +228,7 @@ let () =
         move_card_cmd;
         rate_cmd;
         review_cmd;
+        zshids_cmd;
         (* interactive_cmd *)
       ]
     |> Term.exit

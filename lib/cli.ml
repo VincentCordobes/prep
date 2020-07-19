@@ -352,6 +352,11 @@ let complete_ids () =
   List.iter cards ~f:(fun card -> Fmt.pr "%s " Card.(card.id));
   Fmt.pr "@."
 
+let zshids () =
+  let store = Store.load () in
+  let cards = Store.get_cards store in
+  List.iter cards ~f:(fun card -> Fmt.pr "%s:%s\n" card.id (Card.title card))
+
 let card_id_arg =
   Arg.(
     info [] ~docv:"ID" ~doc:"Id of the card"
