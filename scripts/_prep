@@ -1,0 +1,80 @@
+#compdef _prep prep
+
+
+function _prep {
+  local -a commands
+
+  _arguments -C \
+    "--help[Show help for command]" \
+    "--version[Show prep version]" \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+    cmnds)
+      commands=(
+        "add:Add a card to the first box of the current deck"
+        "add-box:Create a box in the current deck"
+        "add-file:Add a card of type file"
+        "archive:Archive a card"
+        "boxes:List all boxes"
+        "decks:List all decks"
+        "edit:Edit card details"
+        "move:Move a card to a specific box"
+        "rate:Rate a card"
+        "remove:Remove a card"
+        "review:List cards to be reviewed"
+        "show:Show a card"
+        "unarchive:Unarchive a card"
+        "use-deck:Switch the current deck"
+      )
+      _describe "command" commands
+      ;;
+  esac
+
+  case "$words[1]" in
+    rate)
+      _prep_rate
+      ;;
+  esac
+}
+
+function _prep_rate {
+  local -a commands
+
+  _arguments  \
+    "--help[Show help for command]" \
+    "--version[Show prep version]" \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+    cmnds)
+      commands=(
+        "bad:The card is moved to the first box"
+        "again:The card is not moved"
+        "good:The card is graduated to the next box"
+        "easy:The card is moved into the last box"
+      )
+      _describe "command" commands
+      ;;
+  esac
+
+  case "$words[1]" in
+    bad | again | good | easy)
+      _prep_ids
+      ;;
+  esac
+}
+
+function _prep_ids {
+  local -a ids
+  _ids=( ${(f)"$(prep _zshids)"} )
+  _describe "command" _ids
+}
+
+function _help {
+  _arguments \
+    "--help[Show help for command]" \
+    "--version[Show prep version]"
+}

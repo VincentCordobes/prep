@@ -50,11 +50,20 @@ type t = {
 module Id = struct
   type t = string
 
-  let rec generate id_exists =
-    let short_id card_id = Str.first_chars card_id 7 in
-    let state = Random.State.make_self_init () in
-    let id = Uuidm.(v4_gen state () |> to_string |> short_id) in
-    match id_exists id with true -> generate id_exists | false -> id
+  module Short = struct
+    type t = string
+  end
+
+  let namespace =
+    match Uuidm.of_string "b25e1d06-8c00-4e2c-898d-2a4a1f3d673a" with
+    | Some uuid -> uuid
+    | None -> failwith "Invalid uuid v3 namespace"
+
+  let generate title =
+    let id = Uuidm.(v5 namespace title |> to_string) in
+    id
+
+  let to_short ?(length = 7) card_id = Str.first_chars card_id length
 end
 
 let create id ?(deck = Deck.default_id) content last_reviewed_at =
@@ -65,16 +74,12 @@ let create id ?(deck = Deck.default_id) content last_reviewed_at =
       else
         Ok { id; content; box = 0; last_reviewed_at; deck; archived = false }
 
-let generate_id content =
-  let open Base in
-  String.split_lines content |> List.hd_exn |> String.lowercase
-  |> String.substr_replace_all ~pattern:" " ~with_:"_"
-
-let title card =
-  match card.content with
+let title_of_content = function
   | Plain text -> Base.(String.split_lines text |> List.hd_exn)
   | File (name, path) -> (
       match name with Some name -> name | None -> Filename.basename path )
+
+let title card = title_of_content card.content
 
 module Rating = struct
   type t =

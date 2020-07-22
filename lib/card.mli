@@ -15,14 +15,20 @@ type t = {
 module Id : sig
   type t = string
 
-  val generate : (t -> bool) -> t
-end
+  module Short : sig
+    type t = string
+  end
 
-val generate_id : string -> string
+  val generate : string -> t
+
+  val to_short : ?length:int -> t -> Short.t
+end
 
 (** [create id deck content box_id at] creates a new card in the [deck] with an
     [id] a [name] and a [content] [at] the given time *)
 val create : string -> ?deck:string -> content -> float -> (t, string) result
+
+val title_of_content : content -> string
 
 val title : t -> string
 

@@ -112,9 +112,9 @@ let list_decks_cmd =
   ( Term.(const list_decks $ const ()),
     Term.info "decks" ~doc:"List all decks" ~sdocs:Manpage.s_common_options )
 
-let edit_cmd =
-  ( Term.(const (edit Prep.Editor.edit) $ card_id_arg),
-    Term.info "edit" ~doc:"Edit card details" ~sdocs:Manpage.s_common_options )
+(* let edit_cmd = *)
+(* ( Term.(const (edit Prep.Editor.edit) $ card_id_arg), *)
+(* Term.info "edit" ~doc:"Edit card details" ~sdocs:Manpage.s_common_options ) *)
 
 let list_boxes_cmd =
   ( Term.(const list_boxes $ const ()),
@@ -221,7 +221,7 @@ let () =
         add_cmd;
         add_file_cmd;
         add_box_cmd;
-        edit_cmd;
+        (* edit_cmd; *)
         remove_cmd;
         archive_card_cmd;
         unarchive_card_cmd;

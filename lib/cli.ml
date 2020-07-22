@@ -8,41 +8,42 @@ let rec add ?(last_reviewed_at = Unix.time ()) ?(retry = false) content =
     | None -> Editor.edit Editor.default_template
   in
   let store = Store.load () in
-  let id = Card.generate_id content in
-  let exists = Store.exists ~exact:true id store in
+
+  let card_content = Card.Plain content in
+
+  let id = Card.Id.generate (Card.title_of_content card_content) in
+
+  let exists = Store.exists id store in
   if exists then (
     Fmt.pr "This name already exists. Press any key to continue...@.";
     Caml.(input_char Caml.stdin) |> ignore;
     add (Some content) ~retry:true )
   else
-    match Card.create id (Plain content) last_reviewed_at with
+    match Card.create id card_content last_reviewed_at with
     | Ok card ->
         let updated_store = Store.add card store in
         Store.save updated_store;
-        Fmt.pr "Card added (id: %s)\n" card.id
+        Fmt.pr "Card added (id: %s)\n" (Card.Id.to_short card.id)
     | Error msg -> failwith msg
 
 let add_file ?(name = None) ?(last_reviewed_at = Unix.time ()) file =
   let open Caml in
   let store = Store.load () in
-  let id =
-    Card.generate_id
-      (match name with None -> Filename.basename file | Some s -> s)
+
+  let path =
+    if Filename.is_relative file then
+      Filename.concat (Sys.getcwd ()) file
+    else
+      file
   in
-  let exists = Store.exists ~exact:true id store in
+  let card_content = Card.File (name, path) in
+  let id = Card.Id.generate (Card.title_of_content card_content) in
+  let exists = Store.exists id store in
   if exists then
-    Fmt.pr "This path already exists@."
+    Fmt.pr "This card already exists@."
   else
-    let path =
-      if Filename.is_relative file then
-        Filename.concat (Sys.getcwd ()) file
-      else
-        file
-    in
     match
-      Card.create id ~deck:store.current_deck
-        (File (name, path))
-        last_reviewed_at
+      Card.create id ~deck:store.current_deck card_content last_reviewed_at
     with
     | Ok card ->
         store |> Store.add card |> Store.save;
@@ -167,7 +168,7 @@ let pp_cards ?interval ppf cards =
     | None -> pf ppf "Box #%d" (card.box + 1)
     | Some interval -> pf ppf "%a" pp_date (next_review interval card)
   in
-  let pp_last_reviewed ppf card = pf ppf "%a" pp_content card in
+  let _pp_last_reviewed ppf card = pf ppf "%a" pp_content card in
 
   if List.length cards > 0 then
     cards
@@ -176,7 +177,9 @@ let pp_cards ?interval ppf cards =
            if card.archived then
              pf ppf "%a %s@." (styled `Red string) "[archived]" (title card)
            else
-             pf ppf "%a %s@." (styled `Faint pp_last_reviewed) card (title card))
+             pf ppf "%a %s@."
+               (styled `Faint string)
+               (Card.Id.to_short card.id) (title card))
   else
     Fmt.pf ppf "No card.\n"
 
@@ -281,26 +284,26 @@ let show_card ?(with_editor = false) id =
   | Plain text -> Fmt.pr "%s\n" text
   | File (_, path) -> show_file_content ~with_editor path
 
-let edit open_in_editor card_id =
-  let store = Store.load () in
-  let card = Store.find_card_exn card_id store in
-  let content = match card.content with Plain text | File (_, text) -> text in
-  let new_content = open_in_editor (content ^ Editor.default_template) in
-  let new_id = Card.generate_id new_content in
-  let new_card = { card with content = Plain new_content; id = new_id } in
-  store |> Store.set_card card.id new_card |> Store.save;
-
-  if String.(new_id = card.id) then
-    Fmt.pr "Edited card %a@." Console.yellow_s @@ new_card.id
-  else
-    Fmt.pr "Edited card %a (new name %a)@." Console.yellow_s card.id
-      Console.green_s
-    @@ new_card.id
+(* let edit open_in_editor card_id = *)
+(* let store = Store.load () in *)
+(* let card = Store.find_card_exn card_id store in *)
+(* let content = match card.content with Plain text | File (_, text) -> text in *)
+(* let new_content = open_in_editor (content ^ Editor.default_template) in *)
+(* let new_id = Card.Id.generate new_content in *)
+(* let new_card = { card with content = Plain new_content; id = new_id } in *)
+(* store |> Store.set_card card.id new_card |> Store.save; *)
+(*  *)
+(* if String.(new_id = card.id) then *)
+(* Fmt.pr "Edited card %a@." Console.yellow_s @@ new_card.id *)
+(* else *)
+(* Fmt.pr "Edited card %a (new name %a)@." Console.yellow_s card.id *)
+(* Console.green_s *)
+(* @@ new_card.id *)
 
 let remove input_char card_id =
   let store = Store.load () in
   let card = Store.find_card_exn card_id store in
-  Fmt.pr "You are about to remove the card %a, continue? [y/N]: %!"
+  Fmt.pr "You are about to remove the card '%a', continue? [y/N]: %!"
     Console.magenta_s
   @@ Card.title card;
   match input_char () with

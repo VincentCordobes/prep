@@ -36,13 +36,13 @@ let%expect_test "Add a file card" =
   (* when *)
   Cli.add_file "./knocking on heaven door";
   (* then *)
-  [%expect {|Card added (id: knocking_on_heaven_door)|}]
+  [%expect {|Card added (id: .*) (regexp) |}]
 
 let%expect_test "Add a file card with alias" =
   (* when *)
   Cli.add_file ~name:(Some "greenday") "./toto";
   (* then *)
-  [%expect {|Card added (id: greenday)|}]
+  [%expect {|Card added (id: .*) (regexp) |}]
 
 let%expect_test "Add a card" =
   drop_store ();
@@ -55,12 +55,12 @@ let%expect_test "Add a card" =
 
   body|};
   (* then *)
-  [%expect {|Card added (id: blink182_-_all_the_small_things)|}];
+  [%expect {|Card added (id: .*) (regexp) |}];
   Cli.list_boxes ();
   [%expect
     {|
     #0 Every 3 days
-    2020-03-01 Blink182 - All the small things
+    3ca14dc Blink182 - All the small things
 
     #1 Every 1 week
     No card.
@@ -73,14 +73,14 @@ let%expect_test "Add a card" =
 
 let%expect_test "Card Rating" =
   (* when *)
-  Cli.rate ~at:now Card.Rating.Bad "blink182_-_all_the_small_things";
+  Cli.rate ~at:now Card.Rating.Bad "blink182 - all the small things";
   (* then *)
   [%expect {| Card rated bad |}];
   Cli.list_boxes ();
   [%expect
     {|
     #0 Every 3 days
-    2020-03-01 Blink182 - All the small things
+    3ca14dc Blink182 - All the small things
 
     #1 Every 1 week
     No card.
@@ -94,7 +94,7 @@ let%expect_test "Card Rating" =
   (* when *)
   Cli.rate
     ~at:(datetime "2020-01-01T11:00:00")
-    Card.Rating.Again "blink182_-_all_the_small_things";
+    Card.Rating.Again "blink182 - all the small things";
   [%expect {| Card rated again |}];
   Cli.list_boxes ();
   (* then *)
@@ -102,7 +102,7 @@ let%expect_test "Card Rating" =
   [%expect
     {|
     #0 Every 3 days
-    2020-01-04 Blink182 - All the small things
+    3ca14dc Blink182 - All the small things
 
     #1 Every 1 week
     No card.
@@ -125,7 +125,7 @@ let%expect_test "Card Rating" =
     No card.
 
     #1 Every 1 week
-    2020-03-05 Blink182 - All the small things
+    3ca14dc Blink182 - All the small things
 
     #2 Every 8 days
     No card.
@@ -134,7 +134,7 @@ let%expect_test "Card Rating" =
     No card. |}];
 
   (* when *)
-  Cli.rate ~at:now Card.Rating.Again "blink182_-_all_the_small_things";
+  Cli.rate ~at:now Card.Rating.Again "blink182 - all the small things";
   [%expect {| Card rated again |}];
   Cli.list_boxes ();
   (* then *)
@@ -144,7 +144,7 @@ let%expect_test "Card Rating" =
     No card.
 
     #1 Every 1 week
-    2020-03-05 Blink182 - All the small things
+    3ca14dc Blink182 - All the small things
 
     #2 Every 8 days
     No card.
@@ -154,7 +154,7 @@ let%expect_test "Card Rating" =
   |}];
 
   (* when *)
-  Cli.rate ~at:now Card.Rating.Easy "blink182_-_all_the_small_things";
+  Cli.rate ~at:now Card.Rating.Easy "blink182 - all the small things";
   [%expect {| Card rated easy |}];
   Cli.list_boxes ();
   (* then *)
@@ -171,13 +171,13 @@ let%expect_test "Card Rating" =
     No card.
 
     #3 Every 6 weeks
-    2020-04-09 Blink182 - All the small things
+    3ca14dc Blink182 - All the small things
   |}];
 
   (* when *)
-  Cli.rate ~at:now Card.Rating.Easy "blink182_-_all_the_small_things";
+  Cli.rate ~at:now Card.Rating.Easy "blink182 - all the small things";
   [%expect {| Card rated easy |}];
-  Cli.rate ~at:now Card.Rating.Good "blink182_-_all_the_small_things";
+  Cli.rate ~at:now Card.Rating.Good "blink182 - all the small things";
   [%expect {| Card rated good |}];
   Cli.list_boxes ();
   (* then *)
@@ -194,16 +194,16 @@ let%expect_test "Card Rating" =
     No card.
 
     #3 Every 6 weeks
-    2020-04-09 Blink182 - All the small things
+    3ca14dc Blink182 - All the small things
   |}]
 
-let%expect_test "Show a card" =
+let%expect_test "Show a card either by name or id" =
   (try Cli.show_card "azerty" with _ -> ());
   [%expect {|
     Error: No card found with id azerty
   |}];
 
-  Cli.show_card "blink182_-_all_the_small_things";
+  Cli.show_card "blink182 - all the small things";
   [%expect {|
     Blink182 - All the small things 
 
@@ -212,14 +212,6 @@ let%expect_test "Show a card" =
 
   (* Partial match *)
   Cli.show_card "bliNk182";
-  [%expect {|
-    Blink182 - All the small things 
-
-      body
-  |}];
-
-  (* Partial match *)
-  Cli.show_card "blink182_-_all_the_small_thingss";
   [%expect {|
     Blink182 - All the small things 
 
@@ -236,9 +228,9 @@ let%expect_test "Show a card" =
 
   (* Exact match *)
   Cli.add @@ Some {|blink|};
-  [%expect {| Card added (id: blink) |}];
+  [%expect {| Card added (id: 967f852) |}];
 
-  Cli.show_card "blink";
+  Cli.show_card "967f852";
   [%expect {| blink |}];
 
   (* Ambigous match *)
@@ -248,13 +240,13 @@ let%expect_test "Show a card" =
     Error: Several cards matches id bli.
 
     The most similar cards are
-      * blink182_-_all_the_small_things
-      * blink
+      * 967f8 blink
+      * 3ca14 Blink182 - All the small things
   |}];
-  Cli.remove (fun _ -> Some 'y') "blink";
+  Cli.remove (fun _ -> Some 'y') "967f852";
   [%expect
     {|
-    You are about to remove the card blink, continue? [y/N]: Card removed.
+    You are about to remove the card 'blink', continue? [y/N]: Card removed.
   |}]
 
 let%expect_test "Add a box" =
@@ -277,53 +269,19 @@ let%expect_test "Handle duplicate boxes" =
     No card.
 
     #3 Every 6 weeks
-    2020-04-09 Blink182 - All the small things
+    3ca14dc Blink182 - All the small things
 
     #4 Every 400 days
     No card.
-  |}]
-
-let%expect_test "Edit card content" =
-  (* given *)
-  let open_in_editor _ = {|yoo
-
-  new body|} in
-  (* when *)
-  Cli.edit open_in_editor "blink";
-  (* then *)
-  [%expect {| Edited card blink182_-_all_the_small_things (new name yoo) |}];
-  Cli.list_boxes ();
-  [%expect
-    {|
-    #0 Every 3 days
-    No card.
-
-    #1 Every 1 week
-    No card.
-
-    #2 Every 8 days
-    No card.
-
-    #3 Every 6 weeks
-    2020-04-09 yoo
-
-    #4 Every 400 days
-    No card.
-  |}];
-  Cli.show_card "yoo";
-  [%expect {|
-    yoo
-
-      new body
   |}]
 
 let%expect_test "Remove a card - abort" =
   (* when *)
-  Cli.remove (fun _ -> Some 'n') "yoo";
+  Cli.remove (fun _ -> Some 'n') "blink182";
   (* then *)
   [%expect
     {|
-    You are about to remove the card yoo, continue? [y/N]: Aborted!
+    You are about to remove the card 'Blink182 - All the small things', continue? [y/N]: Aborted!
   |}];
   Cli.list_boxes ();
   [%expect
@@ -338,7 +296,7 @@ let%expect_test "Remove a card - abort" =
     No card.
 
     #3 Every 6 weeks
-    2020-04-09 yoo
+    3ca14dc Blink182 - All the small things
 
     #4 Every 400 days
     No card.
@@ -346,11 +304,11 @@ let%expect_test "Remove a card - abort" =
 
 let%expect_test "Remove a card" =
   (* when *)
-  Cli.remove (fun _ -> Some 'y') "yo";
+  Cli.remove (fun _ -> Some 'y') "blink182";
   (* then *)
   [%expect
     {|
-    You are about to remove the card yoo, continue? [y/N]: Card removed.
+    You are about to remove the card 'Blink182 - All the small things', continue? [y/N]: Card removed.
   |}];
   Cli.list_boxes ();
   [%expect
@@ -391,10 +349,10 @@ let%expect_test "next review date" =
   [%expect
     {|
     #0 Every 3 days
-    2020-03-01 song
+    fb8c567 song
 
     #1 Every 1 week
-    2020-03-05 sing
+    509a942 sing
 
     #2 Every 8 days
     No card.
@@ -411,13 +369,13 @@ let%expect_test "next review date" =
   [%expect
     {|
     #0 Every 3 days
-    2020-03-01 song
+    fb8c567 song
 
     #1 Every 1 week
     No card.
 
     #2 Every 8 days
-    2020-03-06 sing
+    509a942 sing
 
     #3 Every 6 weeks
     No card.
@@ -431,7 +389,7 @@ let%expect_test "next review date" =
   [%expect
     {|
     #0 Every 3 days
-    2020-03-01 song
+    fb8c567 song
 
     #1 Every 1 week
     No card.
@@ -440,7 +398,7 @@ let%expect_test "next review date" =
     No card.
 
     #3 Every 6 weeks
-    2020-04-09 sing
+    509a942 sing
 
     #4 Every 400 days
     No card.
@@ -578,7 +536,7 @@ let%expect_test "Decks" =
   [%expect
     {|
     #0 Every 3 days
-    2020-03-01 dilaudid
+    f838597 dilaudid
 
     #1 Every 1 week
     No card.
@@ -628,7 +586,7 @@ let%expect_test "Decks" =
   [%expect
     {|
     #0 Every 3 days
-    2020-03-01 vince
+    626924a vince
 
     #1 Every 1 week
     No card.
@@ -688,3 +646,43 @@ let%expect_test "use-deck" =
       tata
       titi
   |}]
+
+let%expect_test "show card by id" =
+  drop_store ();
+  [%expect.output] |> ignore;
+
+  let a_card id content =
+    Card.
+      {
+        id;
+        content = Plain content;
+        box = 0;
+        deck = Deck.default_id;
+        last_reviewed_at = datetime "2020-04-05T11:00:00";
+        archived = false;
+      }
+  in
+  let store =
+    Store.empty_store ()
+    |> Store.add_box @@ Box.create @@ Day 3
+    |> Store.add (a_card "12345678-0000-0000-0000-000000000000" "First card")
+    |> Store.add (a_card "00000000-0000-0000-0000-000000000000" "Second card")
+    |> Store.add (a_card "00000001-0000-0000-0000-000000000000" "Third card")
+  in
+  Store.init ~store ();
+  (try Cli.show_card "1234567" with _ -> ());
+  [%expect {| First card |}];
+  (try Cli.show_card "1234" with _ -> ());
+  [%expect {| First card |}];
+  (try Cli.show_card "4567" with _ -> ());
+  [%expect {| Error: No card found with id 4567 |}];
+  (try Cli.show_card "00000000" with _ -> ());
+  [%expect {| Second card |}];
+  (try Cli.show_card "0000" with _ -> ());
+  [%expect
+    {|
+    Error: Several cards matches 0000.
+
+    The most similar cards are
+      * 00000001 Third card 
+      * 00000000 Second card |}]

@@ -73,54 +73,82 @@ let set_card id card store =
 
 let all_cards store = store.cards
 
-type find_card_error =
-  | Card_not_found
-  | Ambigous_card_id of Card.t list
+let find_card_by_id id store =
+  let is_matching id card =
+    let regexp = Re.Pcre.re ("^" ^ id) |> Re.compile in
+    Re.execp regexp Card.(card.id)
+  in
+  List.filter store.cards ~f:(is_matching id)
 
-let find_card ?(exact = false) card_id store =
-  let partial_match a b =
-    let regexp = Re.Pcre.re (String.lowercase_ascii a) |> Re.compile in
-    Re.execp regexp (String.lowercase_ascii b)
+let find_card_by_title text store =
+  let is_matching text card =
+    let regexp = Re.Pcre.re ~flags:[ `CASELESS ] text |> Re.compile in
+    Re.execp regexp (Card.title card)
   in
-  let rec get_matches acc = function
-    | [] -> acc
-    | card :: tail ->
-        if card_id = Card.(card.id) then
-          [ card ]
-        else if
-          (not exact)
-          && (partial_match card_id card.id || partial_match card.id card_id)
-        then
-          get_matches (card :: acc) tail
-        else
-          get_matches acc tail
-  in
-  let matches = get_matches [] store.cards in
-  match matches with
-  | [] -> Error Card_not_found
-  | [ x ] -> Ok x
-  | all_matches -> Error (Ambigous_card_id all_matches)
+  List.filter store.cards ~f:(is_matching text)
 
 exception Card_not_found
 
 exception Ambiguous_search of Card.t list
 
-let find_card_exn ?(exact = false) card_id store =
-  match find_card ~exact card_id store with
+type card_search_error =
+  | Card_not_found
+  | Ambigous_card_id of Card.t list
+  | Ambigous_card_name of Card.t list
+
+let find_card text store =
+  match find_card_by_id text store with
+  | [] -> (
+      match find_card_by_title text store with
+      | [] -> Error Card_not_found
+      | [ x ] -> Ok x
+      | matches -> Error (Ambigous_card_name matches) )
+  | [ x ] -> Ok x
+  | matches -> Error (Ambigous_card_id matches)
+
+let get_unambigous_short_id_length cards =
+  let ids = cards |> List.map ~f:(fun card -> Card.(card.id)) in
+  let rec loop i =
+    if i >= 32 then
+      32
+    else
+      let distinct_digits =
+        ids
+        |> List.map ~f:(fun id -> id.[i - 1])
+        |> List.dedup_and_sort ~compare:Char.compare
+      in
+      if List.length distinct_digits = List.length cards then
+        i
+      else
+        loop (i + 1)
+  in
+  loop 5
+
+let find_card_exn card_id store =
+  let print_ambigous_card_message cards =
+    Fmt.(pf stderr "The most similar cards are\n");
+    List.iter cards ~f:(fun card ->
+        Fmt.(
+          pf stderr "  * %s %a\n"
+            Card.(
+              Id.to_short ~length:(get_unambigous_short_id_length cards) card.id)
+            Console.yellow_s (Card.title card)));
+    raise (Ambiguous_search cards)
+  in
+  match find_card card_id store with
   | Ok result -> result
   | Error Card_not_found ->
       Console.(print_error "No card found with id %a" yellow_s card_id);
       raise Card_not_found
   | Error (Ambigous_card_id cards) ->
+      Console.(print_error "Several cards matches %a.\n" cyan_s card_id);
+      print_ambigous_card_message cards
+  | Error (Ambigous_card_name cards) ->
       Console.(print_error "Several cards matches id %a.\n" cyan_s card_id);
-      Fmt.(pf stderr "The most similar cards are\n");
-      List.iter cards ~f:(fun card ->
-          Fmt.(pf stderr "  * %a\n" Console.yellow_s card.id));
-      raise (Ambiguous_search cards)
+      print_ambigous_card_message cards
 
-let exists ?(exact = false) card_id store =
-  let result = find_card ~exact card_id store in
-  match result with Ok _ -> true | Error _ -> false
+let exists card_id store =
+  match find_card_by_id card_id store with [ _ ] -> true | _ -> false
 
 let move_card_to date to_box card_id store =
   let card = find_card_exn card_id store in
