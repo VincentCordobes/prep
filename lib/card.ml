@@ -52,6 +52,8 @@ module Id = struct
 
   module Short = struct
     type t = string
+
+    let default_length = 5
   end
 
   let namespace =
@@ -63,7 +65,8 @@ module Id = struct
     let id = Uuidm.(v5 namespace title |> to_string) in
     id
 
-  let to_short ?(length = 5) card_id = Str.first_chars card_id length
+  let to_short ?(length = Short.default_length) card_id =
+    Str.first_chars card_id (max Short.default_length length)
 end
 
 let create id ?(deck = Deck.default_id) content last_reviewed_at =

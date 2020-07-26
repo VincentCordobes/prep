@@ -113,23 +113,24 @@ let find_card text store =
   | [ x ] -> Ok x
   | matches -> Error (Ambigous_card_id matches)
 
+(* [get_unambigous_short_id_length cards] finds the minimum length of ids so
+   that cards are non-ambigous *)
 let get_unambigous_short_id_length cards =
+  let module Set = Set.Make (String) in
   let ids = cards |> List.map ~f:(fun card -> Card.(card.id)) in
-  let rec loop i =
-    if i >= 32 then
+  let rec loop len =
+    if len >= 32 then
       32
     else
-      let distinct_digits =
-        ids
-        |> List.map ~f:(fun id -> id.[i - 1])
-        |> List.dedup_and_sort ~compare:Char.compare
+      let distinct_ids =
+        ids |> List.map ~f:(fun id -> Str.first_chars id len) |> Set.of_list
       in
-      if List.length distinct_digits = List.length cards then
-        i
+      if Set.cardinal distinct_ids = List.length cards then
+        len
       else
-        loop (i + 1)
+        loop (len + 1)
   in
-  loop 5
+  loop 1
 
 let find_card_exn card_id store =
   let print_ambigous_card_message cards =
