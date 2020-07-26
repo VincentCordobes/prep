@@ -63,7 +63,7 @@ module Id = struct
     let id = Uuidm.(v5 namespace title |> to_string) in
     id
 
-  let to_short ?(length = 7) card_id = Str.first_chars card_id length
+  let to_short ?(length = 5) card_id = Str.first_chars card_id length
 end
 
 let create id ?(deck = Deck.default_id) content last_reviewed_at =
@@ -75,7 +75,7 @@ let create id ?(deck = Deck.default_id) content last_reviewed_at =
         Ok { id; content; box = 0; last_reviewed_at; deck; archived = false }
 
 let title_of_content = function
-  | Plain text -> Base.(String.split_lines text |> List.hd_exn)
+  | Plain text -> Base.(String.split_lines text |> List.hd_exn) |> String.trim
   | File (name, path) -> (
       match name with Some name -> name | None -> Filename.basename path )
 

@@ -69,7 +69,7 @@ function _prep_rate {
 
 function _prep_ids {
   local -a ids
-  _ids=( ${(f)"$(prep _zshids)"} )
+  _ids=( ${(f)"$(prep zshids)"} )
   _describe "command" _ids
 }
 

@@ -21,6 +21,13 @@ let load () =
   let boxes = of_yojson_exn json_value in
   boxes
 
+let _patch_ids store =
+  let cards =
+    List.map store.cards ~f:(fun card ->
+        Card.{ card with id = Card.Id.generate (Card.title card) })
+  in
+  { store with cards }
+
 let save store =
   let boxes_json = to_yojson store in
   Yojson.Safe.to_file store_path boxes_json

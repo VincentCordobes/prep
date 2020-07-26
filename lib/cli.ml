@@ -114,23 +114,36 @@ let print_cards_to_review now store cards =
     List.partition_tf grouped_cards ~f:(fun (date, _cards) -> date <= now)
   in
 
-  let pp_box ppf card = Fmt.pf ppf "#%d" (card.box + 1) in
-
+  let print_space_when_not_last i items ppf =
+    if i < List.length items - 1 then
+      Fmt.pf ppf "@ "
+  in
+  let pp_box ppf box = Fmt.pf ppf "#%d" (box + 1) in
+  let pp_title ppf card =
+    let words = String.split_on_chars ~on:[ ' ' ] (title card) in
+    List.iteri words ~f:(fun i word ->
+        Fmt.pf ppf "%s" word;
+        print_space_when_not_last i words ppf)
+  in
+  let pp_id ppf card = Fmt.(pf ppf "(%s)" (Card.Id.to_short card.id)) in
   let pp_cards ppf cards =
     match cards with
-    | [] -> Fmt.pf ppf "%a@." Fmt.(styled `Yellow string) "  --"
+    | [] -> Fmt.pf ppf "%a" Fmt.(styled `Yellow string) "--"
     | _ ->
-        cards
-        |> List.iteri ~f:(fun i card ->
-               let indent = if i = 0 then "  " else "            " in
-               Fmt.pf ppf "%s%a %s@." indent
-                 (Fmt.styled `Green pp_box)
-                 card (title card))
+        let pp_card i card =
+          Fmt.(
+            pf ppf "%a @[%a@ %a@]"
+              (styled `Green pp_box)
+              card.box pp_title card
+              (styled `Faint pp_id)
+              card);
+          print_space_when_not_last i cards ppf
+        in
+        List.iteri cards ~f:pp_card
   in
-
-  let pp_group pp_cards ppf (date, cards) =
+  let pp_group ppf (date, cards) =
     let color = if is_today date then `Yellow else `Faint in
-    Fmt.pf ppf "%a%a"
+    Fmt.pf ppf "%a  @[<v>%a@]"
       (Fmt.styled color ISO8601.Permissive.pp_date)
       date pp_cards cards
   in
@@ -151,13 +164,16 @@ let print_cards_to_review now store cards =
     | x :: _ -> cards_to_review @ [ x ]
   in
 
-  if List.length cards > 0 then
-    cards_to_print
-    |> List.iteri ~f:(fun _ card_group ->
-           (* if i <> 0 then Fmt.pr "\n"; *)
-           Fmt.pr "%a" (pp_group pp_cards) card_group)
-  else
-    Fmt.pr "No card.\n"
+  let pp_groups ppf cards_to_print =
+    if List.length cards > 0 then
+      cards_to_print
+      |> List.iteri ~f:(fun i card_group ->
+             Fmt.pf ppf "@[<h>%a@]" pp_group card_group;
+             print_space_when_not_last i cards_to_print ppf)
+    else
+      Fmt.pf ppf "No card."
+  in
+  Fmt.pr "@[<v>%a@]@." pp_groups cards_to_print
 
 let pp_cards ?interval ppf cards =
   let open Card in
@@ -175,13 +191,13 @@ let pp_cards ?interval ppf cards =
     |> List.sort ~compare:(fun a b -> if a.archived then 1 else a.box - b.box)
     |> List.iter ~f:(fun card ->
            if card.archived then
-             pf ppf "%a %s@." (styled `Red string) "[archived]" (title card)
+             pf ppf "  %a %s@." (styled `Red string) "[archived]" (title card)
            else
-             pf ppf "%a %s@."
+             pf ppf "  %a %s@."
                (styled `Faint string)
                (Card.Id.to_short card.id) (title card))
   else
-    Fmt.pf ppf "No card.\n"
+    Fmt.pf ppf "  No card.\n"
 
 let list_boxes () =
   let store = Store.load () in

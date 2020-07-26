@@ -89,7 +89,7 @@ let complete_ids_cmd =
 let zshids_cmd =
   let action = Term.(const zshids $ const ()) in
   let info =
-    Term.info "_zshids" ~doc:"Shows the IDs and descriptions of matching tasks"
+    Term.info "zshids" ~doc:"Shows the IDs and descriptions of matching tasks"
   in
   (action, info)
 

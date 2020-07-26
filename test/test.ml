@@ -20,16 +20,16 @@ let%expect_test "List empty default boxes" =
   [%expect
     {|
     #0 Every 3 days
-    No card.
+      No card.
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    No card.
+      No card.
   |}]
 
 let%expect_test "Add a file card" =
@@ -60,16 +60,16 @@ let%expect_test "Add a card" =
   [%expect
     {|
     #0 Every 3 days
-    3ca14dc Blink182 - All the small things
+      3ca14 Blink182 - All the small things
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    No card. |}]
+      No card. |}]
 
 let%expect_test "Card Rating" =
   (* when *)
@@ -80,16 +80,16 @@ let%expect_test "Card Rating" =
   [%expect
     {|
     #0 Every 3 days
-    3ca14dc Blink182 - All the small things
+      3ca14 Blink182 - All the small things
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    No card. |}];
+      No card. |}];
 
   (* when *)
   Cli.rate
@@ -102,16 +102,16 @@ let%expect_test "Card Rating" =
   [%expect
     {|
     #0 Every 3 days
-    3ca14dc Blink182 - All the small things
+      3ca14 Blink182 - All the small things
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    No card. |}];
+      No card. |}];
 
   (* when *)
   Cli.rate ~at:now Card.Rating.Good "blink182";
@@ -122,16 +122,16 @@ let%expect_test "Card Rating" =
   [%expect
     {|
     #0 Every 3 days
-    No card.
+      No card.
 
     #1 Every 1 week
-    3ca14dc Blink182 - All the small things
+      3ca14 Blink182 - All the small things
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    No card. |}];
+      No card. |}];
 
   (* when *)
   Cli.rate ~at:now Card.Rating.Again "blink182 - all the small things";
@@ -141,16 +141,16 @@ let%expect_test "Card Rating" =
   [%expect
     {|
     #0 Every 3 days
-    No card.
+      No card.
 
     #1 Every 1 week
-    3ca14dc Blink182 - All the small things
+      3ca14 Blink182 - All the small things
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    No card.
+      No card.
   |}];
 
   (* when *)
@@ -162,16 +162,16 @@ let%expect_test "Card Rating" =
   [%expect
     {|
     #0 Every 3 days
-    No card.
+      No card.
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    3ca14dc Blink182 - All the small things
+      3ca14 Blink182 - All the small things
   |}];
 
   (* when *)
@@ -185,16 +185,16 @@ let%expect_test "Card Rating" =
   [%expect
     {|
     #0 Every 3 days
-    No card.
+      No card.
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    3ca14dc Blink182 - All the small things
+      3ca14 Blink182 - All the small things
   |}]
 
 let%expect_test "Show a card either by name or id" =
@@ -228,7 +228,7 @@ let%expect_test "Show a card either by name or id" =
 
   (* Exact match *)
   Cli.add @@ Some {|blink|};
-  [%expect {| Card added (id: 967f852) |}];
+  [%expect {| Card added (id: 967f8) |}];
 
   Cli.show_card "967f852";
   [%expect {| blink |}];
@@ -260,19 +260,19 @@ let%expect_test "Handle duplicate boxes" =
   [%expect
     {|
     #0 Every 3 days
-    No card.
+      No card.
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    3ca14dc Blink182 - All the small things
+      3ca14 Blink182 - All the small things
 
     #4 Every 400 days
-    No card.
+      No card.
   |}]
 
 let%expect_test "Remove a card - abort" =
@@ -287,19 +287,19 @@ let%expect_test "Remove a card - abort" =
   [%expect
     {|
     #0 Every 3 days
-    No card.
+      No card.
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    3ca14dc Blink182 - All the small things
+      3ca14 Blink182 - All the small things
 
     #4 Every 400 days
-    No card.
+      No card.
   |}]
 
 let%expect_test "Remove a card" =
@@ -314,19 +314,19 @@ let%expect_test "Remove a card" =
   [%expect
     {|
     #0 Every 3 days
-    No card.
+      No card.
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    No card.
+      No card.
 
     #4 Every 400 days
-    No card.
+      No card.
   |}]
 
 let%expect_test "next review date" =
@@ -349,19 +349,19 @@ let%expect_test "next review date" =
   [%expect
     {|
     #0 Every 3 days
-    fb8c567 song
+      fb8c5 song
 
     #1 Every 1 week
-    509a942 sing
+      509a9 sing
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    No card.
+      No card.
 
     #4 Every 400 days
-    No card.
+      No card.
   |}];
 
   rate_card_good "sing";
@@ -369,19 +369,19 @@ let%expect_test "next review date" =
   [%expect
     {|
     #0 Every 3 days
-    fb8c567 song
+      fb8c5 song
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    509a942 sing
+      509a9 sing
 
     #3 Every 6 weeks
-    No card.
+      No card.
 
     #4 Every 400 days
-    No card.
+      No card.
   |}];
 
   rate_card_good "sing";
@@ -389,19 +389,19 @@ let%expect_test "next review date" =
   [%expect
     {|
     #0 Every 3 days
-    fb8c567 song
+      fb8c5 song
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    509a942 sing
+      509a9 sing
 
     #4 Every 400 days
-    No card.
+      No card.
   |}]
 
 let%expect_test "prep review" =
@@ -427,38 +427,38 @@ let%expect_test "prep review" =
   Cli.review (date "2020-04-04");
   [%expect {|
     2020-04-04  --
-    2020-04-08  #1 first card
+    2020-04-08  #1 first card (first)
   |}];
   Cli.review (date "2020-04-05");
   [%expect {|
     2020-04-05  --
-    2020-04-08  #1 first card
+    2020-04-08  #1 first card (first)
   |}];
   Cli.review (date "2020-04-06");
   [%expect {|
     2020-04-06  --
-    2020-04-08  #1 first card
+    2020-04-08  #1 first card (first)
   |}];
   Cli.review (date "2020-04-07");
   [%expect {|
     2020-04-07  --
-    2020-04-08  #1 first card
+    2020-04-08  #1 first card (first)
   |}];
   Cli.review (datetime "2020-04-08T00:00");
   [%expect {|
-    2020-04-08  #1 first card
+    2020-04-08  #1 first card (first)
   |}];
   Cli.review (datetime "2020-04-08T10:00");
   [%expect {|
-    2020-04-08  #1 first card
+    2020-04-08  #1 first card (first)
   |}];
   Cli.review (datetime "2020-04-08T12:00");
   [%expect {|
-    2020-04-08  #1 first card
+    2020-04-08  #1 first card (first)
   |}];
   Cli.review (date "2020-04-09");
   [%expect {|
-    2020-04-08  #1 first card
+    2020-04-08  #1 first card (first)
     2020-04-09  --
   |}]
 
@@ -484,22 +484,22 @@ let%expect_test "Box are sorted by interval" =
   [%expect
     {|
     #0 Every 2 days
-    No card.
+      No card.
 
     #1 Every 3 days
-    No card.
+      No card.
 
     #2 Every 4 days
-    No card.
+      No card.
 
     #3 Every 1 week
-    No card.
+      No card.
 
     #4 Every 8 days
-    No card.
+      No card.
 
     #5 Every 2 weeks
-    No card.
+      No card.
   |}]
 
 let%expect_test "Decks" =
@@ -536,22 +536,22 @@ let%expect_test "Decks" =
   [%expect
     {|
     #0 Every 3 days
-    f838597 dilaudid
+      f8385 dilaudid
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    No card. |}];
+      No card. |}];
 
   (* when reviewing a deck *)
   Cli.review (date "2022-04-05");
   (* then it should only display current deck cards *)
   [%expect {|
-    2020-03-01  #1 dilaudid
+    2020-03-01  #1 dilaudid (f8385)
     2022-04-05  -- |}];
 
   (* when switching the current deck*)
@@ -562,16 +562,16 @@ let%expect_test "Decks" =
     {| 
     Using deck custom_deck 
     #0 Every 3 days
-    No card.
+      No card.
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    No card. |}];
+      No card. |}];
 
   (* when reviewing a deck *)
   Cli.review (date "2022-04-05");
@@ -586,20 +586,20 @@ let%expect_test "Decks" =
   [%expect
     {|
     #0 Every 3 days
-    626924a vince
+      62692 vince
 
     #1 Every 1 week
-    No card.
+      No card.
 
     #2 Every 8 days
-    No card.
+      No card.
 
     #3 Every 6 weeks
-    No card. |}];
+      No card. |}];
   Cli.review (date "2022-04-05");
   (* and it reviews only that card *)
   [%expect {|
-    2020-03-01  #1 vince
+    2020-03-01  #1 vince (62692)
     2022-04-05  -- |}]
 
 let%expect_test "use-deck" =
