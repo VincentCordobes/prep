@@ -212,7 +212,9 @@ let list_boxes () =
     in
 
     let pp_box_id ppf box_id =
-      Fmt.pf ppf "%a" Fmt.(styled `Green string) ("#" ^ Int.to_string box_id)
+      Fmt.pf ppf "%a"
+        Fmt.(styled `Green string)
+        ("#" ^ Int.to_string (box_id + 1))
     in
 
     let pp_heading ppf box_id =

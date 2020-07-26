@@ -19,16 +19,16 @@ let%expect_test "List empty default boxes" =
   Cli.list_boxes ();
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       No card.
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card.
   |}]
 
@@ -59,16 +59,16 @@ let%expect_test "Add a card" =
   Cli.list_boxes ();
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       3ca14 Blink182 - All the small things
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card. |}]
 
 let%expect_test "Card Rating" =
@@ -79,16 +79,16 @@ let%expect_test "Card Rating" =
   Cli.list_boxes ();
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       3ca14 Blink182 - All the small things
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card. |}];
 
   (* when *)
@@ -101,16 +101,16 @@ let%expect_test "Card Rating" =
   (* should not move the card but still update the last reviewed *)
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       3ca14 Blink182 - All the small things
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card. |}];
 
   (* when *)
@@ -121,16 +121,16 @@ let%expect_test "Card Rating" =
   (* Should move the card a to the next box*)
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       No card.
 
-    #1 Every 1 week
+    #2 Every 1 week
       3ca14 Blink182 - All the small things
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card. |}];
 
   (* when *)
@@ -140,16 +140,16 @@ let%expect_test "Card Rating" =
   (* then *)
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       No card.
 
-    #1 Every 1 week
+    #2 Every 1 week
       3ca14 Blink182 - All the small things
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card.
   |}];
 
@@ -161,16 +161,16 @@ let%expect_test "Card Rating" =
   (* should move the card at the end *)
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       No card.
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       3ca14 Blink182 - All the small things
   |}];
 
@@ -184,16 +184,16 @@ let%expect_test "Card Rating" =
   (* Should not move the card *)
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       No card.
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       3ca14 Blink182 - All the small things
   |}]
 
@@ -259,19 +259,19 @@ let%expect_test "Handle duplicate boxes" =
   Cli.list_boxes ();
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       No card.
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       3ca14 Blink182 - All the small things
 
-    #4 Every 400 days
+    #5 Every 400 days
       No card.
   |}]
 
@@ -286,19 +286,19 @@ let%expect_test "Remove a card - abort" =
   Cli.list_boxes ();
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       No card.
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       3ca14 Blink182 - All the small things
 
-    #4 Every 400 days
+    #5 Every 400 days
       No card.
   |}]
 
@@ -313,19 +313,19 @@ let%expect_test "Remove a card" =
   Cli.list_boxes ();
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       No card.
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card.
 
-    #4 Every 400 days
+    #5 Every 400 days
       No card.
   |}]
 
@@ -348,19 +348,19 @@ let%expect_test "next review date" =
   (* Note that there are 29 days in in feb 2020 *)
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       fb8c5 song
 
-    #1 Every 1 week
+    #2 Every 1 week
       509a9 sing
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card.
 
-    #4 Every 400 days
+    #5 Every 400 days
       No card.
   |}];
 
@@ -368,19 +368,19 @@ let%expect_test "next review date" =
   Cli.list_boxes ();
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       fb8c5 song
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       509a9 sing
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card.
 
-    #4 Every 400 days
+    #5 Every 400 days
       No card.
   |}];
 
@@ -388,19 +388,19 @@ let%expect_test "next review date" =
   Cli.list_boxes ();
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       fb8c5 song
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       509a9 sing
 
-    #4 Every 400 days
+    #5 Every 400 days
       No card.
   |}]
 
@@ -483,22 +483,22 @@ let%expect_test "Box are sorted by interval" =
   (* then *)
   [%expect
     {|
-    #0 Every 2 days
+    #1 Every 2 days
       No card.
 
-    #1 Every 3 days
+    #2 Every 3 days
       No card.
 
-    #2 Every 4 days
+    #3 Every 4 days
       No card.
 
-    #3 Every 1 week
+    #4 Every 1 week
       No card.
 
-    #4 Every 8 days
+    #5 Every 8 days
       No card.
 
-    #5 Every 2 weeks
+    #6 Every 2 weeks
       No card.
   |}]
 
@@ -535,16 +535,16 @@ let%expect_test "Decks" =
   (* and it's added to the default deck *)
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       f8385 dilaudid
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card. |}];
 
   (* when reviewing a deck *)
@@ -561,16 +561,16 @@ let%expect_test "Decks" =
   [%expect
     {| 
     Using deck custom_deck 
-    #0 Every 3 days
+    #1 Every 3 days
       No card.
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card. |}];
 
   (* when reviewing a deck *)
@@ -585,16 +585,16 @@ let%expect_test "Decks" =
   Cli.list_boxes ();
   [%expect
     {|
-    #0 Every 3 days
+    #1 Every 3 days
       62692 vince
 
-    #1 Every 1 week
+    #2 Every 1 week
       No card.
 
-    #2 Every 8 days
+    #3 Every 8 days
       No card.
 
-    #3 Every 6 weeks
+    #4 Every 6 weeks
       No card. |}];
   Cli.review (date "2022-04-05");
   (* and it reviews only that card *)
