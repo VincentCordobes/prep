@@ -137,10 +137,11 @@ let find_card_exn card_id store =
     Fmt.(pf stderr "The most similar cards are\n");
     List.iter cards ~f:(fun card ->
         Fmt.(
-          pf stderr "  * %s %a\n"
+          pf stderr "  * %a %s\n"
+            Fmt.(styled `Yellow string)
             Card.(
               Id.to_short ~length:(get_unambigous_short_id_length cards) card.id)
-            Console.yellow_s (Card.title card)));
+            (Card.title card)));
     raise (Ambiguous_search cards)
   in
   match find_card card_id store with
