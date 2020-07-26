@@ -374,7 +374,8 @@ let complete_ids () =
 let zshids () =
   let store = Store.load () in
   let cards = Store.get_cards store in
-  List.iter cards ~f:(fun card -> Fmt.pr "%s:%s\n" card.id (Card.title card))
+  List.iter cards ~f:(fun card ->
+      Fmt.pr "%s:%s\n" (Card.Id.to_short card.id) (Card.title card))
 
 let card_id_arg =
   Arg.(
