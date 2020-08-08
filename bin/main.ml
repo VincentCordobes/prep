@@ -170,9 +170,13 @@ let review_cmd =
     |> Arg.pos ~rev:true 0 Arg.(some string) None
     |> Arg.value
   in
+  let review_all_flag =
+    let doc = "Includes all future cards to review" in
+    Arg.info [ "a"; "all" ] ~doc |> Arg.flag |> Arg.value
+  in
 
-  let review deck = review ~deck now in
-  let action = Term.(const review $ deck_arg) in
+  let review deck all = review ~deck ~all now in
+  let action = Term.(const review $ deck_arg $ review_all_flag) in
   let info =
     Term.info "review" ~doc:"List cards to be reviewed"
       ~sdocs:Manpage.s_common_options

@@ -80,7 +80,7 @@ let next_review (interval : Interval.t) (card : Card.t) =
     in
     date_of_datetime card.last_reviewed_at + interval)
 
-let print_cards_to_review now store cards =
+let print_cards_to_review ?(all = false) now store cards =
   let open Card in
   let grouped_cards =
     cards
@@ -161,7 +161,7 @@ let print_cards_to_review now store cards =
   let cards_to_print =
     match futur_cards_to_review with
     | [] -> cards_to_review
-    | x :: _ -> cards_to_review @ [ x ]
+    | x :: tail -> cards_to_review @ [ x ] @ if all then tail else []
   in
 
   let pp_groups ppf cards_to_print =
@@ -404,7 +404,7 @@ let rate ~at (rating : Card.Rating.t) card_id =
   @@ String.lowercase
   @@ Card.Rating.to_string rating
 
-let review ?(deck = None) now =
+let review ?(deck = None) ?(all = false) now =
   let open Box in
   let store = Store.load () in
   let deck = match deck with Some deck -> deck | None -> store.current_deck in
@@ -418,4 +418,4 @@ let review ?(deck = None) now =
   in
   store |> Store.get_cards ~deck
   |> List.filter ~f:(fun card -> not Card.(card.archived))
-  |> print_cards_to_review now store
+  |> print_cards_to_review ~all now store
