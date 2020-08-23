@@ -1,0 +1,39 @@
+#!/bin/bash
+
+get_os () {
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    echo "linux"
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "macos"
+  elif [[ "$OSTYPE" == "cygwin" ]]; then
+    echo "windows"
+  elif [[ "$OSTYPE" == "msys" ]]; then
+    echo "windows"
+  elif [[ "$OSTYPE" == "win32" ]]; then
+    echo "windows"
+  elif [[ "$OSTYPE" == "freebsd"* ]]; then
+    echo "linux"
+  else
+    echo "Unknown os"
+    exit -1
+  fi
+}
+
+cd /tmp
+os=`get_os`
+
+if [[ "$os" == "windows" ]]; then
+  echo "Sorry, Windows is not yet supported :("
+  exit -1
+fi
+
+echo "Downloading latest ${os} release..."
+curl -sLo prep.tar.gz "https://github.com/VincentCordobes/prep/releases/latest/download/prep-${os}.tar.gz"
+
+echo "Installing binaries..."
+tar -xzf prep.tar.gz
+rm prep.tar.gz
+chmod u+x prep*
+sudo mv prep* /usr/local/bin/
+
+echo "prep $(prep --version) installed!"

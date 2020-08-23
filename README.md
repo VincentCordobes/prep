@@ -37,6 +37,14 @@ It is highly inspired by the _Leitner system_. Unlike SuperMemo—a popular spac
 
 
 
+## Installation
+
+
+```sh
+curl -sSL https://raw.githubusercontent.com/VincentCordobes/prep/master/scripts/install.sh | bash
+```
+
+_Note: Linux and macos are supported. See the releases section._
 
 
 
