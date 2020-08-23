@@ -3,11 +3,11 @@ on: [push, pull_request]
 jobs:
   run:
     name: Build
-    runs-on: ${{ matrix.operating-system }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        operating-system: [macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
         ocaml-version: [ '4.09.0' ]
     steps:
     - uses: actions/checkout@master
