@@ -4,5 +4,4 @@ if-then-else = fit-or-vertical
 exp-grouping = preserve
 type-decl = sparse
 doc-comments = before
-doc-comments-val = before
 wrap-comments = true

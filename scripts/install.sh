@@ -36,4 +36,8 @@ rm prep.tar.gz
 chmod u+x prep*
 sudo mv prep* /usr/local/bin/
 
+echo "Installing zsh completion"
+curl -sLo /usr/local/share/zsh/site-functions/_prep \
+  "https://raw.githubusercontent.com/VincentCordobes/prep/master/scripts/_prep"
+
 echo "prep $(prep --version) installed!"

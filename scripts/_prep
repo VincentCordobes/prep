@@ -1,11 +1,12 @@
 #compdef _prep prep
 
+help="--help[Show help for command]"
 
 function _prep {
   local -a commands
 
   _arguments -C \
-    "--help[Show help for command]" \
+    $help \
     "--version[Show prep version]" \
     "1: :->cmnds" \
     "*::arg:->args"
@@ -36,15 +37,63 @@ function _prep {
     rate)
       _prep_rate
       ;;
+    show)
+      _prep_ids
+      ;;
+    archive)
+      _prep_ids
+      ;;
+    add-file)
+      _prep_add_file
+      ;;
+    remove)
+      _prep_ids
+      ;;
+    archive)
+      _prep_ids
+      ;;
+    unarchive)
+      _prep_ids
+      ;;
+    add-box)
+      _arguments \
+      "--interval[interval in days or weeks of the box]"
+      ;;
+    use-deck)
+      _prep_use_deck
+      ;;
+  esac
+}
+
+function _prep_add_file {
+  local -a ids
+
+  _arguments  \
+    $help \
+    ":files:_files"
+}
+
+function _prep_use_deck {
+  local -a ids
+
+  _arguments -C \
+    $help \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+    cmnds)
+      _ids=( ${(f)"$(prep decks | sed -E 's/^(  |\* )//g')"}  )
+      _describe "command" _ids
+      ;;
   esac
 }
 
 function _prep_rate {
   local -a commands
 
-  _arguments  \
-    "--help[Show help for command]" \
-    "--version[Show prep version]" \
+  _arguments -C \
+    $help \
     "1: :->cmnds" \
     "*::arg:->args"
 
@@ -69,12 +118,16 @@ function _prep_rate {
 
 function _prep_ids {
   local -a ids
-  _ids=( ${(f)"$(prep zshids)"} )
-  _describe "command" _ids
-}
 
-function _help {
-  _arguments \
-    "--help[Show help for command]" \
-    "--version[Show prep version]"
+  _arguments -C \
+    $help \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+    cmnds)
+      _ids=( ${(f)"$(prep zshids)"} )
+      _describe "command" _ids
+      ;;
+  esac
 }
