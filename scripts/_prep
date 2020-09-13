@@ -27,7 +27,7 @@ function _prep {
         "review:List cards to be reviewed"
         "show:Show a card"
         "unarchive:Unarchive a card"
-        "use-deck:Switch the current deck"
+        "use:Switch the current deck"
       )
       _describe "command" commands
       ;;
@@ -59,7 +59,7 @@ function _prep {
       _arguments \
       "--interval[interval in days or weeks of the box]"
       ;;
-    use-deck)
+    use)
       _prep_use_deck
       ;;
   esac

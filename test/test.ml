@@ -602,7 +602,7 @@ let%expect_test "Decks" =
     2020-03-01  #1 vince (62692)
     2022-04-05  -- |}]
 
-let%expect_test "use-deck" =
+let%expect_test "use" =
   drop_store ();
   [%expect.output] |> ignore;
 

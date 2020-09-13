@@ -103,7 +103,7 @@ let use_deck_cmd =
   let input_char () = Stdio.(In_channel.input_char Caml.stdin) in
   let action = Term.(const (use_deck ~input_char) $ name_arg) in
   let info =
-    Term.info "use-deck" ~doc:"Switch the current deck"
+    Term.info "use" ~doc:"Switch the current deck"
       ~sdocs:Manpage.s_common_options
   in
   (action, info)
