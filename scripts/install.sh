@@ -40,4 +40,11 @@ echo "Installing zsh completion"
 curl -sLo /usr/local/share/zsh/site-functions/_prep \
   "https://raw.githubusercontent.com/VincentCordobes/prep/master/scripts/_prep"
 
+if [ -d /etc/bash_completion.d/ ]; then
+  echo "Installing bash completion..."
+  curl -sLo /etc/bash_completion.d/prep.sh \
+    "https://raw.githubusercontent.com/VincentCordobes/prep/master/scripts/complete.sh"
+  source /etc/bash_completion.d/prep.sh
+fi
+
 echo "prep $(prep --version) installed!"
