@@ -14,13 +14,17 @@ type t = {
 
 let default_id = "default"
 
-(** Default boxes configuration is [3d; 1w; 8day; 6w] *)
+(** Default boxes configuration is ~= fib *)
 let default_boxes =
   [
+    Box.create @@ Day 1;
+    Box.create @@ Day 2;
     Box.create @@ Day 3;
+    Box.create @@ Day 5;
     Box.create @@ Week 1;
-    Box.create @@ Day 8;
-    Box.create @@ Week 6;
+    Box.create @@ Day 13;
+    Box.create @@ Week 3;
+    Box.create @@ Week 5;
   ]
 
 let create ?(id = default_id) ?(decks = []) ?(boxes = default_boxes) () =
