@@ -104,14 +104,22 @@ type card_search_error =
   | Ambigous_card_name of Card.t list
 
 let find_card text store =
-  match find_card_by_id text store with
-  | [] -> (
-      match find_card_by_title text store with
-      | [] -> Error Card_not_found
-      | [ x ] -> Ok x
-      | matches -> Error (Ambigous_card_name matches) )
+  let result =
+    match text with
+    | [ word ] -> (
+        match find_card_by_id word store with
+        | [] -> find_card_by_title word store
+        | result -> result)
+    | words ->
+        words
+        |> List.bind ~f:(fun word -> find_card_by_title word store)
+        |> List.find_all_dups ~compare:(fun a b ->
+               Card.(String.compare a.id b.id))
+  in
+  match result with
+  | [] -> Error Card_not_found
   | [ x ] -> Ok x
-  | matches -> Error (Ambigous_card_id matches)
+  | matches -> Error (Ambigous_card_name matches)
 
 (* [get_unambigous_short_id_length cards] finds the minimum length of ids so
    that cards are non-ambigous *)
@@ -132,7 +140,7 @@ let get_unambigous_short_id_length cards =
   in
   loop 1
 
-let find_card_exn card_id store =
+let find_card_exn search store =
   let print_ambigous_card_message cards =
     Fmt.(pf stderr "The most similar cards are\n");
     List.iter cards ~f:(fun card ->
@@ -144,16 +152,17 @@ let find_card_exn card_id store =
             (Card.title card)));
     raise (Ambiguous_search cards)
   in
-  match find_card card_id store with
+  let text = String.concat " " search in
+  match find_card search store with
   | Ok result -> result
   | Error Card_not_found ->
-      Console.(print_error "No card found with id %a" yellow_s card_id);
+      Console.(print_error "No card found with id %a" yellow_s text);
       raise Card_not_found
   | Error (Ambigous_card_id cards) ->
-      Console.(print_error "Several cards matches %a.\n" cyan_s card_id);
+      Console.(print_error "Several cards matches %a.\n" cyan_s text);
       print_ambigous_card_message cards
   | Error (Ambigous_card_name cards) ->
-      Console.(print_error "Several cards matches id %a.\n" cyan_s card_id);
+      Console.(print_error "Several cards matches id %a.\n" cyan_s text);
       print_ambigous_card_message cards
 
 let exists card_id store =
@@ -182,7 +191,6 @@ let default_store () = empty_store () |> add_deck (Deck.create ())
 let init ?(store = default_store ()) () =
   if Sys.file_exists store_path then
     ()
-  else begin
+  else (
     Util.mkdir_p (Filename.dirname store_path) 0o777;
-    store |> save
-  end
+    store |> save)

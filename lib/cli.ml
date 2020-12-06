@@ -1,5 +1,4 @@
 open Base
-open Cmdliner
 
 let rec add ?(last_reviewed_at = Unix.time ()) ?(retry = false) content =
   let content =
@@ -17,7 +16,7 @@ let rec add ?(last_reviewed_at = Unix.time ()) ?(retry = false) content =
   if exists then (
     Fmt.pr "This name already exists. Press any key to continue...@.";
     Caml.(input_char Caml.stdin) |> ignore;
-    add (Some content) ~retry:true )
+    add (Some content) ~retry:true)
   else
     match Card.create id card_content last_reviewed_at with
     | Ok card ->
@@ -260,7 +259,7 @@ let rec use_deck ~input_char name =
           Store.save store;
           Fmt.pr "Deck created.@.";
           use_deck ~input_char name
-      | _ -> Fmt.pr "Aborted!@." )
+      | _ -> Fmt.pr "Aborted!@.")
 
 let show_file_content ?(with_editor = false) path =
   let filetype = Caml.Filename.extension path in
@@ -278,7 +277,7 @@ let show_file_content ?(with_editor = false) path =
           | None -> (
               match Caml.Sys.getenv_opt "PAGER" with
               | Some x -> [ x ]
-              | None -> [] ) )
+              | None -> []))
     else
       []
   in
@@ -310,7 +309,7 @@ let show_card ?(with_editor = false) id =
 (* let new_id = Card.Id.generate new_content in *)
 (* let new_card = { card with content = Plain new_content; id = new_id } in *)
 (* store |> Store.set_card card.id new_card |> Store.save; *)
-(*  *)
+(* *)
 (* if String.(new_id = card.id) then *)
 (* Fmt.pr "Edited card %a@." Console.yellow_s @@ new_card.id *)
 (* else *)
@@ -349,24 +348,6 @@ let move_card ~at card_id box_id =
   let store = Store.load () in
   Store.move_card_to at (box_id - 1) card_id store |> Store.save
 
-let content_arg =
-  Arg.(
-    info [ "c"; "content" ] ~docv:"CONTENT"
-      ~doc:"The content in text of the card"
-    |> opt (some string) None
-    |> value)
-
-let add_deck_cmd =
-  let name_arg =
-    Arg.(
-      info [] ~docv:"name" ~doc:"deck name"
-      |> pos ~rev:true 0 (some string) None
-      |> required)
-  in
-  let action = Term.(const add_deck $ name_arg) in
-  let info = Term.info "add-deck" in
-  (action, info)
-
 let complete_ids () =
   let store = Store.load () in
   let cards = store.cards in
@@ -378,12 +359,6 @@ let zshids () =
   let cards = Store.get_cards store in
   List.iter cards ~f:(fun card ->
       Fmt.pr "%s:%s\n" (Card.Id.to_short card.id) (Card.title card))
-
-let card_id_arg =
-  Arg.(
-    info [] ~docv:"ID" ~doc:"Id of the card"
-    |> pos ~rev:true 0 (some string) None
-    |> required)
 
 let rate ~at (rating : Card.Rating.t) card_id =
   let open Card.Rating in

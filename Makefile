@@ -22,3 +22,7 @@ clean:
 start:
 	dune exec src/main.exe --profile release
 
+
+.PHONY: utop
+utop: ## Run a REPL and link with the project's libraries
+	opam exec -- dune utop --root . lib -- -implicit-bindings

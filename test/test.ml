@@ -5,7 +5,7 @@ let drop_store () =
   let store_path = try Sys.getenv "STORE_PATH" with Not_found -> "" in
   if store_path <> "" && Sys.file_exists store_path then (
     Fmt.pr "Removing existing store";
-    Sys.remove store_path )
+    Sys.remove store_path)
 
 let before_all () =
   drop_store ();
@@ -97,7 +97,7 @@ let%expect_test "Add a card" =
 
 let%expect_test "Card Rating" =
   (* when *)
-  Cli.rate ~at:now Card.Rating.Bad "blink182 - all the small things";
+  Cli.rate ~at:now Card.Rating.Bad [ "blink182 - all the small things" ];
   (* then *)
   [%expect {| Card rated bad |}];
   Cli.list_boxes ();
@@ -130,7 +130,8 @@ let%expect_test "Card Rating" =
   (* when *)
   Cli.rate
     ~at:(datetime "2020-01-01T11:00:00")
-    Card.Rating.Again "blink182 - all the small things";
+    Card.Rating.Again
+    [ "blink182 - all the small things" ];
   [%expect {| Card rated again |}];
   Cli.list_boxes ();
   (* then *)
@@ -162,7 +163,7 @@ let%expect_test "Card Rating" =
       No card. |}];
 
   (* when *)
-  Cli.rate ~at:now Card.Rating.Good "blink182";
+  Cli.rate ~at:now Card.Rating.Good [ "blink182" ];
   [%expect {| Card rated good |}];
   Cli.list_boxes ();
   (* then *)
@@ -194,7 +195,7 @@ let%expect_test "Card Rating" =
       No card. |}];
 
   (* when *)
-  Cli.rate ~at:now Card.Rating.Again "blink182 - all the small things";
+  Cli.rate ~at:now Card.Rating.Again [ "blink182 - all the small things" ];
   [%expect {| Card rated again |}];
   Cli.list_boxes ();
   (* then *)
@@ -226,7 +227,7 @@ let%expect_test "Card Rating" =
   |}];
 
   (* when *)
-  Cli.rate ~at:now Card.Rating.Easy "blink182 - all the small things";
+  Cli.rate ~at:now Card.Rating.Easy [ "blink182 - all the small things" ];
   [%expect {| Card rated easy |}];
   Cli.list_boxes ();
   (* then *)
@@ -259,9 +260,9 @@ let%expect_test "Card Rating" =
   |}];
 
   (* when *)
-  Cli.rate ~at:now Card.Rating.Easy "blink182 - all the small things";
+  Cli.rate ~at:now Card.Rating.Easy [ "blink182 - all the small things" ];
   [%expect {| Card rated easy |}];
-  Cli.rate ~at:now Card.Rating.Good "blink182 - all the small things";
+  Cli.rate ~at:now Card.Rating.Good [ "blink182 - all the small things" ];
   [%expect {| Card rated good |}];
   Cli.list_boxes ();
   (* then *)
@@ -294,12 +295,12 @@ let%expect_test "Card Rating" =
   |}]
 
 let%expect_test "Show a card either by name or id" =
-  (try Cli.show_card "azerty" with _ -> ());
+  (try Cli.show_card [ "azerty" ] with _ -> ());
   [%expect {|
     Error: No card found with id azerty
   |}];
 
-  Cli.show_card "blink182 - all the small things";
+  Cli.show_card [ "blink182 - all the small things" ];
   [%expect {|
     Blink182 - All the small things 
 
@@ -307,7 +308,7 @@ let%expect_test "Show a card either by name or id" =
   |}];
 
   (* Partial match *)
-  Cli.show_card "bliNk182";
+  Cli.show_card [ "bliNk182" ];
   [%expect {|
     Blink182 - All the small things 
 
@@ -315,7 +316,7 @@ let%expect_test "Show a card either by name or id" =
   |}];
 
   (* partial match in the middle *)
-  Cli.show_card "all";
+  Cli.show_card [ "all" ];
   [%expect {|
     Blink182 - All the small things 
 
@@ -326,11 +327,11 @@ let%expect_test "Show a card either by name or id" =
   Cli.add @@ Some {|blink|};
   [%expect {| Card added (id: 967f8) |}];
 
-  Cli.show_card "967f852";
+  Cli.show_card [ "967f852" ];
   [%expect {| blink |}];
 
   (* Ambigous match *)
-  (try Cli.show_card "bli" with _ -> ());
+  (try Cli.show_card [ "bli" ] with _ -> ());
   [%expect
     {| 
     Error: Several cards matches id bli.
@@ -339,7 +340,7 @@ let%expect_test "Show a card either by name or id" =
       * 967f8 blink
       * 3ca14 Blink182 - All the small things
   |}];
-  Cli.remove (fun _ -> Some 'y') "967f852";
+  Cli.remove (fun _ -> Some 'y') [ "967f852" ];
   [%expect
     {|
     You are about to remove the card 'blink', continue? [y/N]: Card removed.
@@ -385,7 +386,7 @@ let%expect_test "Handle duplicate boxes" =
 
 let%expect_test "Remove a card - abort" =
   (* when *)
-  Cli.remove (fun _ -> Some 'n') "blink182";
+  Cli.remove (fun _ -> Some 'n') [ "blink182" ];
   (* then *)
   [%expect
     {|
@@ -424,7 +425,7 @@ let%expect_test "Remove a card - abort" =
 
 let%expect_test "Remove a card" =
   (* when *)
-  Cli.remove (fun _ -> Some 'y') "blink182";
+  Cli.remove (fun _ -> Some 'y') [ "blink182" ];
   (* then *)
   [%expect
     {|
@@ -468,7 +469,7 @@ let%expect_test "next review date" =
   in
 
   let rate_card_good card_id =
-    Cli.rate ~at:now Card.Rating.Good card_id;
+    Cli.rate ~at:now Card.Rating.Good [ card_id ];
     [%expect {| Card rated good |}]
   in
 
@@ -874,18 +875,18 @@ let%expect_test "show card by id" =
     |> Store.add (a_card "00000001-0000-0000-0000-000000000000" "Third card")
   in
   Store.init ~store ();
-  (try Cli.show_card "1234567" with _ -> ());
+  (try Cli.show_card [ "1234567" ] with _ -> ());
   [%expect {| First card |}];
-  (try Cli.show_card "1234" with _ -> ());
+  (try Cli.show_card [ "1234" ] with _ -> ());
   [%expect {| First card |}];
-  (try Cli.show_card "4567" with _ -> ());
+  (try Cli.show_card [ "4567" ] with _ -> ());
   [%expect {| Error: No card found with id 4567 |}];
-  (try Cli.show_card "00000000" with _ -> ());
+  (try Cli.show_card [ "00000000" ] with _ -> ());
   [%expect {| Second card |}];
-  (try Cli.show_card "0000" with _ -> ());
+  (try Cli.show_card [ "0000" ] with _ -> ());
   [%expect
     {|
-    Error: Several cards matches 0000.
+    Error: Several cards matches id 0000.
 
     The most similar cards are
       * 00000001 Third card 

@@ -29,6 +29,26 @@ let default_cmd =
   ( Term.(ret (const (fun _ -> `Help (`Pager, None)) $ const ())),
     Term.info "prep" ~version:"v1.0" ~doc ~sdocs ~man )
 
+let card_id_info = Arg.(info [] ~docv:"ID" ~doc:"Id of the card")
+
+let add_deck_cmd =
+  let name_arg =
+    Arg.(
+      info [] ~docv:"name" ~doc:"deck name"
+      |> pos ~rev:true 0 (some string) None
+      |> required)
+  in
+  let action = Term.(const add_deck $ name_arg) in
+  let info = Term.info "add-deck" in
+  (action, info)
+
+let content_arg =
+  Arg.(
+    info [ "c"; "content" ] ~docv:"CONTENT"
+      ~doc:"The content in text of the card"
+    |> opt (some string) None
+    |> value)
+
 let add_cmd =
   let now = Unix.time () in
   let action =
@@ -112,10 +132,6 @@ let list_decks_cmd =
   ( Term.(const list_decks $ const ()),
     Term.info "decks" ~doc:"List all decks" ~sdocs:Manpage.s_common_options )
 
-(* let edit_cmd = *)
-(* ( Term.(const (edit Prep.Editor.edit) $ card_id_arg), *)
-(* Term.info "edit" ~doc:"Edit card details" ~sdocs:Manpage.s_common_options ) *)
-
 let list_boxes_cmd =
   ( Term.(const list_boxes $ const ()),
     Term.info "boxes" ~doc:"List all boxes" ~sdocs:Manpage.s_common_options )
@@ -127,6 +143,9 @@ let move_card_cmd =
       info [] ~docv:"BOX_ID" ~doc:"Id of the box"
       |> pos ~rev:true 0 (some int) None
       |> required)
+  in
+  let card_id_arg =
+    card_id_info |> Arg.pos_left 0 ~rev:true Arg.string [] |> Arg.non_empty
   in
   ( Term.(const (move_card ~at:now) $ card_id_arg $ box_id_arg),
     Term.info "move" ~doc:"Move a card to a specific box"
@@ -148,6 +167,9 @@ let rate_cmd =
       |> pos 0 (some rating) None
       |> required)
   in
+  let card_id_arg =
+    card_id_info |> Arg.pos_right 0 Arg.string [] |> Arg.non_empty
+  in
   let now = Unix.time () in
   let action = Term.(const (rate ~at:now) $ rating_arg $ card_id_arg) in
   let info =
@@ -157,6 +179,7 @@ let rate_cmd =
 
 let remove_cmd =
   let input_char () = Stdio.(In_channel.input_char Caml.stdin) in
+  let card_id_arg = Arg.(card_id_info |> pos_all string [] |> non_empty) in
   let action = Term.(const (remove input_char) $ card_id_arg) in
   let info =
     Term.info "remove" ~doc:"Remove a card" ~sdocs:Manpage.s_common_options
@@ -192,11 +215,14 @@ let show_card_cmd =
     Arg.info [ "e"; "edit" ] ~doc |> Arg.flag |> Arg.value
   in
 
-  let show_card id with_editor = show_card ~with_editor id in
-  ( Term.(const show_card $ card_id_arg $ with_editor_arg),
+  let card_id_arg = Arg.(card_id_info |> pos_all string [] |> non_empty) in
+
+  let show_card with_editor id = show_card ~with_editor id in
+  ( Term.(const show_card $ with_editor_arg $ card_id_arg),
     Term.info "show" ~doc:"Show a card" ~sdocs:Manpage.s_common_options )
 
 let archive_card_cmd =
+  let card_id_arg = Arg.(card_id_info |> pos_all string [] |> non_empty) in
   let action = Term.(const archive $ card_id_arg) in
   let info =
     Term.info "archive" ~doc:"Archive a card" ~sdocs:Manpage.s_common_options
@@ -204,6 +230,9 @@ let archive_card_cmd =
   (action, info)
 
 let unarchive_card_cmd =
+  let card_id_arg =
+    card_id_info |> Arg.pos_all Arg.string [] |> Arg.non_empty
+  in
   let action = Term.(const unarchive $ card_id_arg) in
   let info =
     Term.info "unarchive" ~doc:"Unarchive a card"
@@ -225,7 +254,6 @@ let () =
         add_cmd;
         add_file_cmd;
         add_box_cmd;
-        (* edit_cmd; *)
         remove_cmd;
         archive_card_cmd;
         unarchive_card_cmd;
