@@ -47,4 +47,9 @@ if [ -d /etc/bash_completion.d/ ]; then
   source /etc/bash_completion.d/prep.sh
 fi
 
+if [ -d /usr/local/share/man/man1/ ]; then
+  echo "Installing man pages..."
+  prep --help=groff > /usr/local/share/man/man1/prep.1
+fi
+
 echo "prep $(prep --version) installed!"
