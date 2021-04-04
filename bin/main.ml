@@ -136,6 +136,11 @@ let list_boxes_cmd =
   ( Term.(const list_boxes $ const ()),
     Term.info "boxes" ~doc:"List all boxes" ~sdocs:Manpage.s_common_options )
 
+let list_cmd =
+  ( Term.(const list_boxes $ const ()),
+    Term.info "list" ~doc:"Alias for boxes command"
+      ~sdocs:Manpage.s_common_options )
+
 let move_card_cmd =
   let now = Unix.time () in
   let box_id_arg =
@@ -247,6 +252,7 @@ let () =
     Term.eval_choice default_cmd ~catch:false
       [
         list_boxes_cmd;
+        list_cmd;
         list_decks_cmd;
         use_deck_cmd;
         complete_ids_cmd;

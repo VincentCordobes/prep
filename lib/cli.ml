@@ -18,7 +18,9 @@ let rec add ?(last_reviewed_at = Unix.time ()) ?(retry = false) content =
     Caml.(input_char Caml.stdin) |> ignore;
     add (Some content) ~retry:true)
   else
-    match Card.create id card_content last_reviewed_at with
+    match
+      Card.create ~deck:store.current_deck id card_content last_reviewed_at
+    with
     | Ok card ->
         let updated_store = Store.add card store in
         Store.save updated_store;
