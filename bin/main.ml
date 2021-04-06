@@ -1,6 +1,28 @@
 open Cmdliner
 open Prep.Cli
 
+let review_term =
+  let now = Unix.time () in
+  let deck_arg =
+    Arg.info [] ~doc:"Deck name"
+    |> Arg.pos ~rev:true 0 Arg.(some string) None
+    |> Arg.value
+  in
+  let review_all_flag =
+    let doc = "Includes all future cards to review" in
+    Arg.info [ "a"; "all" ] ~doc |> Arg.flag |> Arg.value
+  in
+
+  let review deck all = review ~deck ~all now in
+  Term.(const review $ deck_arg $ review_all_flag)
+
+let review_cmd =
+  let info =
+    Term.info "review" ~doc:"List cards to be reviewed"
+      ~sdocs:Manpage.s_common_options
+  in
+  (review_term, info)
+
 let default_cmd =
   let doc = "A spaced-repetition tool" in
   let man =
@@ -26,8 +48,8 @@ let default_cmd =
     ]
   in
   let sdocs = Manpage.s_common_options in
-  ( Term.(ret (const (fun _ -> `Help (`Pager, None)) $ const ())),
-    Term.info "prep" ~version:"v1.0" ~doc ~sdocs ~man )
+  let info = Term.info "prep" ~version:"v1.0" ~doc ~sdocs ~man in
+  (review_term, info)
 
 let card_id_info = Arg.(info [] ~docv:"ID" ~doc:"Id of the card")
 
@@ -188,26 +210,6 @@ let remove_cmd =
   let action = Term.(const (remove input_char) $ card_id_arg) in
   let info =
     Term.info "remove" ~doc:"Remove a card" ~sdocs:Manpage.s_common_options
-  in
-  (action, info)
-
-let review_cmd =
-  let now = Unix.time () in
-  let deck_arg =
-    Arg.info [] ~doc:"Deck name"
-    |> Arg.pos ~rev:true 0 Arg.(some string) None
-    |> Arg.value
-  in
-  let review_all_flag =
-    let doc = "Includes all future cards to review" in
-    Arg.info [ "a"; "all" ] ~doc |> Arg.flag |> Arg.value
-  in
-
-  let review deck all = review ~deck ~all now in
-  let action = Term.(const review $ deck_arg $ review_all_flag) in
-  let info =
-    Term.info "review" ~doc:"List cards to be reviewed"
-      ~sdocs:Manpage.s_common_options
   in
   (action, info)
 
