@@ -41,7 +41,7 @@ It is highly inspired by the _Leitner system_. Unlike SuperMemo—a popular spac
 
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/VincentCordobes/prep/master/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/VincentCordobes/prep/master/scripts/install.sh | sudo sh
 ```
 
 _Note: Linux and macos are supported. See the releases section._

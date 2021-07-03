@@ -33,10 +33,11 @@ curl -sLo prep.tar.gz "https://github.com/VincentCordobes/prep/releases/latest/d
 echo "Installing binaries..."
 tar -xzf prep.tar.gz
 rm prep.tar.gz
-chmod u+x prep*
-sudo mv prep* /usr/local/bin/
+chmod u+x prep
+mv prep /usr/local/bin/
 
 echo "Installing zsh completion"
+mkdir -p /usr/local/share/zsh/site-functions
 curl -sLo /usr/local/share/zsh/site-functions/_prep \
   "https://raw.githubusercontent.com/VincentCordobes/prep/master/scripts/_prep"
 
@@ -47,9 +48,8 @@ if [ -d /etc/bash_completion.d/ ]; then
   source /etc/bash_completion.d/prep.sh
 fi
 
-if [ -d /usr/local/share/man/man1/ ]; then
-  echo "Installing man pages..."
-  prep --help=groff > /usr/local/share/man/man1/prep.1
-fi
+echo "Installing man pages..."
+mkdir -p /usr/local/share/man/man1
+prep --help=groff > /usr/local/share/man/man1/prep.1
 
 echo "prep $(prep --version) installed!"
