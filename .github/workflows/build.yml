@@ -8,12 +8,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest]
-        ocaml-version: [ '4.09.0' ]
+        ocaml-compiler:
+          - 4.13.x
     steps:
     - uses: actions/checkout@master
-    - uses: avsm/setup-ocaml@master
+    - uses: ocaml/setup-ocaml@v2
       with:
-        ocaml-version: ${{ matrix.ocaml-version }}
+        ocaml-compiler: ${{ matrix.ocaml-compiler }}
     - run: opam pin add prep.dev -n .
     - run: opam depext -yt prep
     - run: opam install -t . --deps-only --yes

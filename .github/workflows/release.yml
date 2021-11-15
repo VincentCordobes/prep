@@ -35,12 +35,14 @@ jobs:
             os_name: linux
           - os: macos-latest
             os_name: macos
+        ocaml-compiler:
+          - 4.13.x
     steps:
       - name: Checkout code
         uses: actions/checkout@master
-      - uses: avsm/setup-ocaml@master
+      - uses: ocaml/setup-ocaml@v2
         with:
-          ocaml-version: 4.09.0 
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
       - name: Build project 
         run: |
           opam pin add prep.dev -n .
